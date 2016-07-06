@@ -1,6 +1,7 @@
 import logging
 import os
 
+logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('vyper')
 
 
@@ -55,9 +56,8 @@ class Vyper(object):
 
         if not val:
             source = self._find(path[0].lower())
-            if source:
-                if isinstance(source, dict):
-                    val = path[1:] in source
+            if source and isinstance(source, dict):
+                val = source[path[1:][0]]
 
         if not val:
             return None
