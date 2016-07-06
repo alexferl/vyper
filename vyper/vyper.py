@@ -48,6 +48,14 @@ class Vyper(object):
     def add_config_path(self, path):
         pass
 
+    def _search_dict(self, d, key):
+        if key in d: return d[key]
+        for k, v in d.items():
+            if isinstance(v, dict):
+                item = self._search_dict(v, key)
+                if item is not None:
+                    return item
+
     def get(self, key):
         path = key.split(self.key_delimiter)
 
@@ -57,7 +65,7 @@ class Vyper(object):
         if not val:
             source = self._find(path[0].lower())
             if source and isinstance(source, dict):
-                val = source[path[1:][0]]
+                val = self._search_dict(source, path[-1])
 
         if not val:
             return None
