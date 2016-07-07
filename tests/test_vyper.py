@@ -1,6 +1,7 @@
 import json
-import StringIO
 import unittest
+from builtins import str as text
+from io import StringIO
 
 import vyper
 
@@ -26,12 +27,12 @@ class TestVyper(unittest.TestCase):
 
     def _init_configs(self):
         self.v.set_config_type('json')
-        r = StringIO.StringIO(json.dumps(json_example))
+        r = StringIO(text(json.dumps(json_example)))
         self.v.unmarshall_reader(r, self.v.config)
 
     def _init_json(self):
         self.v.set_config_type('json')
-        r = StringIO.StringIO(json.dumps(json_example))
+        r = StringIO(text(json.dumps(json_example)))
         self.v.unmarshall_reader(r, self.v.config)
 
     #def test_basics(self):
@@ -72,6 +73,8 @@ class TestVyper(unittest.TestCase):
     def test_aliases_of_aliases(self):
         self.v.register_alias('Foo', 'Bar')
         self.v.register_alias('Bar', 'Title')
+        self.v.set('Foo', 'Checking Case')
+
         self.assertEqual('Checking Case', self.v.get('Bar'))
 
     def test_recursive_aliases(self):

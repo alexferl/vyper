@@ -79,7 +79,7 @@ class Vyper(object):
 
         # TODO: check args here
 
-        val = self.override.get(key, False)
+        val = self.override.get(key)
         if val:
             log.debug('%s found in override: %s', key, val)
             return val
@@ -90,7 +90,7 @@ class Vyper(object):
                 log.debug('%s found in environment: %s', key, val)
                 return val
 
-        env_key = self.env.get(key, False)
+        env_key = self.env.get(key)
         if env_key:
             log.debug('%s registered as env var: %s', key, env_key)
             val = self._get_env(env_key)
@@ -100,19 +100,19 @@ class Vyper(object):
             else:
                 log.debug('%s env value unset', env_key)
 
-        val = self.config.get(key, False)
+        val = self.config.get(key)
         if val:
             log.debug('%s found in config: %s', key, val)
             return val
 
         # TODO: tested for nested here
 
-        val = self.kvstore.get(key, False)
+        val = self.kvstore.get(key)
         if val:
             log.debug('%s found in key/value store: %s', key, val)
             return val
 
-        val = self.defaults.get(key, False)
+        val = self.defaults.get(key)
         if val:
             log.debug('%s found in defaults: %s', key, val)
             return val
@@ -129,11 +129,42 @@ class Vyper(object):
         self.env_key_replacer = r
 
     def register_alias(self, alias, key):
-        self.aliases[alias] = key
-        # TODO: implement the real thing
+        """Aliases provide another accessor for the same key.
+        This enables one to change a name without breaking the application.
+        """
+        alias = alias.lower()
+        key = key.lower()
+        if alias != key and alias != self._real_key(key):
+            exists = self.aliases.get('alias')
+
+            if not exists:
+                # if we alias something that exists in one of the dicts to
+                # another name, we'll never be able to get that value using the
+                # original name, so move the config value to the new _real_key.
+                val = self.config.get('alias')
+                if val:
+                    self.config.pop(alias)
+                    self.config[key] = val
+                val = self.kvstore.get('alias')
+                if val:
+                    self.kvstore.pop(alias)
+                    self.kvstore[key] = val
+                val = self.defaults.get('alias')
+                if val:
+                    self.defaults.pop(alias)
+                    self.defaults[key] = val
+                val = self.override.get('alias')
+                if val:
+                    self.override.pop(alias)
+                    self.override[key] = val
+
+                self.aliases[alias] = key
+        else:
+            log.warning('Creating circular reference alias %s %s %s',
+                        alias, key, self._real_key(key))
 
     def _real_key(self, key):
-        new_key = self.aliases.get(key, False)
+        new_key = self.aliases.get(key)
         if new_key:
             return self._real_key(new_key)
         else:
@@ -147,16 +178,16 @@ class Vyper(object):
         Default only used when no value is provided by the user via
         arg, config or ENV.
         """
-        key = self._real_key(key.lower())
-        self.defaults[key] = value
+        k = self._real_key(key.lower())
+        self.defaults[k] = value
 
     def set(self, key, value):
         """Sets the value for the key in the override register.
         Will be used instead of values obtained via
         args, config file, ENV, defaults or key/value store.
         """
-        key = self._real_key(key.lower())
-        self.override[key] = value
+        k = self._real_key(key.lower())
+        self.override[k] = value
 
     def unmarshall_reader(self, file_, d):
         return util.unmarshall_config_reader(file_, d, self._get_config_type())
