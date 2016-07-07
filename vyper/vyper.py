@@ -1,6 +1,8 @@
 import logging
 import os
 
+from . import util
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('vyper')
 
@@ -128,9 +130,7 @@ class Vyper(object):
 
     def register_alias(self, alias, key):
         self.aliases[alias] = key
-
-    def _register_alias(self, alias, key):
-        pass
+        # TODO: implement the real thing
 
     def _real_key(self, key):
         new_key = self.aliases.get(key, False)
@@ -157,6 +157,9 @@ class Vyper(object):
         """
         key = self._real_key(key.lower())
         self.override[key] = value
+
+    def unmarshall_reader(self, file_, d):
+        return util.unmarshall_config_reader(file_, d, self._get_config_type())
 
     def all_keys(self):
         """Return all keys regardless where they are set."""
@@ -208,10 +211,12 @@ class Vyper(object):
             self.config_type = type_
 
     def _get_config_type(self):
-        pass
+        if self.config_type != '':
+            return self.config_type
 
     def _get_config_file(self):
-        pass
+        if self.config_file != '':
+            return self.config_file
 
     def _search_in_path(self, path):
         pass
