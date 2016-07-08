@@ -37,7 +37,8 @@ class ConfigFileNotFoundError(Exception):
     def __init__(self, message, locations, *args):
         self.message = message
         self.locations = locations
-        super(ConfigFileNotFoundError, self).__init__(message, locations, *args)
+        super(ConfigFileNotFoundError, self).__init__(message, locations,
+                                                      *args)
 
     def __str__(self):
         return 'Config File {} Not Found in {}'.format(self.message,
