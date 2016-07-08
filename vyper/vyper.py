@@ -189,6 +189,22 @@ class Vyper(object):
         """
         # TODO: implement this
 
+    def bind_args(self, args):
+        return self.bind_arg_values(args)
+
+    def bind_arg_values(self, args):
+        for k, v in args.items():
+            try:
+                self.bind_arg_value(k, v)
+            except ValueError:
+                pass
+
+    def bind_arg_value(self, key, arg):
+        if arg is None:
+            raise ValueError('arg for {} is None'.format(key))
+
+        self.args[key.lower()] = arg
+
     def _find(self, key):
         """Given a key, find the value
         Vyper will check in the following order:
@@ -197,7 +213,10 @@ class Vyper(object):
         """
         key = self._real_key(key)
 
-        # TODO: check args here
+        val = self.args.get(key)
+        if val:
+            log.debug('%s found in args: %s', key, val)
+            return val
 
         val = self.override.get(key)
         if val:
@@ -248,7 +267,7 @@ class Vyper(object):
 
     def automatic_env(self):
         """Have Vyper check ENV variables for all keys set in
-        config, default & flags.
+        config, default & args.
         """
         # TODO: implement this
 
