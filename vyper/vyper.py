@@ -99,7 +99,7 @@ class Vyper(object):
 
     def _merge_with_env_prefix(self, key):
         if self._env_prefix != '':
-            return (self._env_prefix + '_' + key).upper()
+            return ('{0}_{1}'.format(self._env_prefix, key)).upper()
         return key.upper()
 
     def _get_env(self, key):
@@ -121,7 +121,7 @@ class Vyper(object):
         """
         if path != '':
             abspath = util.abs_pathify(path)
-            log.info('adding {} to paths to search')
+            log.info('adding %s to paths to search', self._config_paths)
             if abspath not in self._config_paths:
                 self._config_paths.append(abspath)
 
@@ -209,7 +209,7 @@ class Vyper(object):
 
     def bind_arg_value(self, key, arg):
         if arg is None:
-            raise ValueError('arg for {} is None'.format(key))
+            raise ValueError('arg for {0} is None'.format(key))
 
         self._args[key.lower()] = arg
 
@@ -451,12 +451,12 @@ class Vyper(object):
             return self._config_file
 
     def _search_in_path(self, path):
-        log.debug('Searching for config in {}'.format(path))
+        log.debug('Searching for config in {0}'.format(path))
         for ext in SUPPORTED_EXTS:
-            full_path = path+self._config_name+ext
-            log.debug('Checking for {}'.format(full_path))
+            full_path = "{0}{1}{2}".format(path, self._config_name, ext)
+            log.debug('Checking for {0}'.format(full_path))
             if util.exists(path):
-                log.debug('Found: {}'.format(full_path))
+                log.debug('Found: {0}'.format(full_path))
                 return full_path
         return ''
 
@@ -464,7 +464,7 @@ class Vyper(object):
         """Search all `config_paths` for any config file.
         Returns the first path that exists (and is a config file).
         """
-        log.info('Searching for config in: {}'.format(self._config_paths))
+        log.info('Searching for config in: {0}'.format(self._config_paths))
 
         for cp in self._config_paths:
             f = self._search_in_path(cp)

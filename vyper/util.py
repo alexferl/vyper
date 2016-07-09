@@ -15,16 +15,16 @@ class ConfigParserError(Exception):
         super(ConfigParserError, self).__init__(message, *args)
 
     def __str__(self):
-        return 'While parsing config: {}'.format(self.message)
+        return 'While parsing config: {0}'.format(self.message)
 
 
 def abs_pathify(in_path):
-    log.info('Trying to resolve absolute path to {}'.format(in_path))
+    log.info('Trying to resolve absolute path to %s', in_path)
 
     try:
         return pathlib.Path(in_path).resolve()
     except (OSError, FileNotFoundError) as e:
-        log.error('Couldn\'t discover absolute path: {}'.format(e),)
+        log.error('Couldn\'t discover absolute path: %s', e)
         return ''
 
 

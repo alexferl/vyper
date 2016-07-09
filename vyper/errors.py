@@ -5,7 +5,7 @@ class UnsupportedConfigError(Exception):
         super(UnsupportedConfigError, self).__init__(message, *args)
 
     def __str__(self):
-        return 'Unsupported Config Type {}'.format(self.message)
+        return 'Unsupported Config Type {0}'.format(self.message)
 
 
 class UnsupportedRemoteProviderError(Exception):
@@ -17,7 +17,7 @@ class UnsupportedRemoteProviderError(Exception):
         super(UnsupportedRemoteProviderError, self).__init__(message, *args)
 
     def __str__(self):
-        return 'Unsupported Remote Provider Type {}'.format(self.message)
+        return 'Unsupported Remote Provider Type {0}'.format(self.message)
 
 
 class RemoteConfigError(Exception):
@@ -29,7 +29,7 @@ class RemoteConfigError(Exception):
         super(RemoteConfigError, self).__init__(message, *args)
 
     def __str__(self):
-        return 'Remote Configuration Error {}'.format(self.message)
+        return 'Remote Configuration Error {0}'.format(self.message)
 
 
 class ConfigFileNotFoundError(Exception):
@@ -41,5 +41,5 @@ class ConfigFileNotFoundError(Exception):
                                                       *args)
 
     def __str__(self):
-        return 'Config File {} Not Found in {}'.format(self.message,
-                                                       self.locations)
+        return 'Config File {} Not Found in {0}'.format(self.message,
+                                                        self.locations)
