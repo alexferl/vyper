@@ -2,7 +2,7 @@ import logging
 import os
 import pprint
 
-from . import util
+from . import errors, util
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('vyper')
@@ -53,30 +53,30 @@ class Vyper(object):
     def __init__(self, config_name='config', key_delimiter='.'):
         # Delimiter that separates a list of keys
         # used to access a nested value in one go.
-        self.key_delimiter = key_delimiter
+        self._key_delimiter = key_delimiter
 
         # A set of paths to look for the config file in.
-        self.config_paths = []
+        self._config_paths = []
 
         # A set of remote providers to search for the configuration.
-        self.remote_providers = []
+        self._remote_providers = []
 
         # Name of file to look for inside the path.
-        self.config_name = config_name
-        self.config_file = ''
-        self.config_type = ''
-        self.env_prefix = ''
+        self._config_name = config_name
+        self._config_file = ''
+        self._config_type = ''
+        self._env_prefix = ''
 
-        self.automatic_env_applied = False
-        self.env_key_replacer = None
+        self._automatic_env_applied = False
+        self._env_key_replacer = None
 
-        self.config = {}
-        self.override = {}
-        self.defaults = {}
-        self.kvstore = {}
-        self.args = {}
-        self.env = {}
-        self.aliases = {}
+        self._config = {}
+        self._override = {}
+        self._defaults = {}
+        self._kvstore = {}
+        self._args = {}
+        self._env = {}
+        self._aliases = {}
 
     def watch_config(self):
         # TODO: implement this
@@ -87,7 +87,7 @@ class Vyper(object):
         Vyper will use this and not check any of the config paths.
         """
         if file_ != '':
-            self.config_file = file_
+            self._config_file = file_
 
     def set_env_prefix(self, prefix):
         """Define a prefix that ENVIRONMENT variables will use.
@@ -95,30 +95,35 @@ class Vyper(object):
         for env. variables that start with "SPF_"
         """
         if prefix != '':
-            self.env_prefix = prefix
+            self._env_prefix = prefix
 
     def _merge_with_env_prefix(self, key):
-        if self.env_prefix != '':
-            return (self.env_prefix + '_' + key).upper()
+        if self._env_prefix != '':
+            return (self._env_prefix + '_' + key).upper()
+        return key.upper()
 
     def _get_env(self, key):
         """Wrapper around os.getenv() which replaces characters
         in the original key. This allows env vars which have different keys
         than the config object keys.
         """
-        if self.env_key_replacer:
-            key = self.env_key_replacer.replace(key)
-        return os.getenv(key, '')
+        if self._env_key_replacer is not None:
+            key = key.replace(*self._env_key_replacer)
+        return os.getenv(key)
 
     def config_file_used(self):
         """Return the file used to populate the config registry."""
-        return self.config_file
+        return self._config_file
 
     def add_config_path(self, path):
         """Add a path for Vyper to search for the config file in.
         Can be called multiple times to define multiple search paths.
         """
-        # TODO: implement this
+        if path != '':
+            abspath = util.abs_pathify(path)
+            log.info('adding {} to paths to search')
+            if abspath not in self._config_paths:
+                self._config_paths.append(abspath)
 
     def add_remote_provider(self, provider, endpoint, path):
         """Adds a remote configuration source.
@@ -134,7 +139,7 @@ class Vyper(object):
 
     def add_secure_remote_provider(self, provider, endpoint, path,
                                    secretkeyring):
-        """AddSecureRemoteProvider adds a remote configuration source.
+        """Adds a remote configuration source.
         Secure Remote Providers are searched in the order they are added.
         provider is a string value, "etcd" or "consul" are currently supported.
         endpoint is the url. etcd requires http://ip:port consul requires
@@ -163,23 +168,23 @@ class Vyper(object):
                     return item
 
     def get(self, key):
-        """Vyper is essentially repository for configurations
-        get can retrieve any value given the key to use
-        get has the behavior of returning the value associated with the first
+        """Vyper is essentially repository for configurations.
+        `get` can retrieve any value given the key to use.
+        `get` has the behavior of returning the value associated with the first
         place from where it is set. Viper will check in the following order:
         override, arg, env, config file, key/value store, default.
         """
-        path = key.split(self.key_delimiter)
+        path = key.split(self._key_delimiter)
 
         lowercase_key = key.lower()
         val = self._find(lowercase_key)
 
-        if not val:
+        if val is None:
             source = self._find(path[0].lower())
-            if source and isinstance(source, dict):
+            if source is not None and isinstance(source, dict):
                 val = self._search_dict(source, path[-1])
 
-        if not val:
+        if val is None:
             return None
 
         return val
@@ -192,6 +197,9 @@ class Vyper(object):
     def bind_args(self, args):
         return self.bind_arg_values(args)
 
+    def bind_arg(self, key, arg):
+        return self.bind_arg_value(key, arg)
+
     def bind_arg_values(self, args):
         for k, v in args.items():
             try:
@@ -203,7 +211,28 @@ class Vyper(object):
         if arg is None:
             raise ValueError('arg for {} is None'.format(key))
 
-        self.args[key.lower()] = arg
+        self._args[key.lower()] = arg
+
+    def bind_env(self, *input_):
+        """Binds a Vyper key to a ENV variable.
+        ENV variables are case sensitive.
+        If only a key is provided, it will use the env key matching the key,
+        uppercased.
+        `env_prefix` will be used when set when env name is not provided.
+        """
+        if len(input_) == 0:
+            return 'bind_env missing key to bind to'
+
+        key = input_[0].lower()
+
+        if len(input_) == 1:
+            env_key = self._merge_with_env_prefix(key)
+        else:
+            env_key = input_[1]
+
+        self._env[key] = env_key
+
+        return None
 
     def _find(self, key):
         """Given a key, find the value
@@ -213,17 +242,17 @@ class Vyper(object):
         """
         key = self._real_key(key)
 
-        val = self.args.get(key)
-        if val:
+        val = self._args.get(key)
+        if val is not None:
             log.debug('%s found in args: %s', key, val)
             return val
 
-        val = self.override.get(key)
-        if val:
+        val = self._override.get(key)
+        if val is not None:
             log.debug('%s found in override: %s', key, val)
             return val
 
-        if self.automatic_env_applied:
+        if self._automatic_env_applied:
             # even if it hasn't been registered, if `automatic_env` is used,
             # check any `get` request
             val = self._get_env(self._merge_with_env_prefix(key))
@@ -231,8 +260,8 @@ class Vyper(object):
                 log.debug('%s found in environment: %s', key, val)
                 return val
 
-        env_key = self.env.get(key)
-        if env_key:
+        env_key = self._env.get(key)
+        if env_key is not None:
             log.debug('%s registered as env var: %s', key, env_key)
             val = self._get_env(env_key)
             if val != '':
@@ -241,20 +270,20 @@ class Vyper(object):
             else:
                 log.debug('%s env value unset', env_key)
 
-        val = self.config.get(key)
-        if val:
+        val = self._config.get(key)
+        if val is not None:
             log.debug('%s found in config: %s', key, val)
             return val
 
         # TODO: implement Test for nested config parameter
 
-        val = self.kvstore.get(key)
-        if val:
+        val = self._kvstore.get(key)
+        if val is not None:
             log.debug('%s found in key/value store: %s', key, val)
             return val
 
-        val = self.defaults.get(key)
-        if val:
+        val = self._defaults.get(key)
+        if val is not None:
             log.debug('%s found in defaults: %s', key, val)
             return val
 
@@ -263,20 +292,30 @@ class Vyper(object):
     def is_set(self, key):
         """Check to see if the key has been set in any of the data locations.
         """
-        # TODO: implement this
+        path = key.split(self._key_delimiter)
+
+        lower_case_key = key.lower()
+        val = self._find(lower_case_key)
+
+        if val is None:
+            source = self._find(path[0].lower())
+            if source is not None and isinstance(source, dict):
+                val = self._search_dict(source, path[-1])
+
+        return val is not None
 
     def automatic_env(self):
         """Have Vyper check ENV variables for all keys set in
         config, default & args.
         """
-        # TODO: implement this
+        self._automatic_env_applied = True
 
-    def set_env_key_replacer(self, r):
+    def set_env_key_replacer(self, old, new):
         """Sets the strings.Replacer on the Vyper object.
         Useful for mapping an environment variable to a key that does
         not match it.
         """
-        self.env_key_replacer = r
+        self._env_key_replacer = old, new
 
     def register_alias(self, alias, key):
         """Aliases provide another accessor for the same key.
@@ -285,37 +324,37 @@ class Vyper(object):
         alias = alias.lower()
         key = key.lower()
         if alias != key and alias != self._real_key(key):
-            exists = self.aliases.get('alias')
+            exists = self._aliases.get('alias')
 
-            if not exists:
+            if exists is None:
                 # if we alias something that exists in one of the dicts to
                 # another name, we'll never be able to get that value using the
                 # original name, so move the config value to the new _real_key.
-                val = self.config.get('alias')
+                val = self._config.get('alias')
                 if val:
-                    self.config.pop(alias)
-                    self.config[key] = val
-                val = self.kvstore.get('alias')
+                    self._config.pop(alias)
+                    self._config[key] = val
+                val = self._kvstore.get('alias')
                 if val:
-                    self.kvstore.pop(alias)
-                    self.kvstore[key] = val
-                val = self.defaults.get('alias')
+                    self._kvstore.pop(alias)
+                    self._kvstore[key] = val
+                val = self._defaults.get('alias')
                 if val:
-                    self.defaults.pop(alias)
-                    self.defaults[key] = val
-                val = self.override.get('alias')
+                    self._defaults.pop(alias)
+                    self._defaults[key] = val
+                val = self._override.get('alias')
                 if val:
-                    self.override.pop(alias)
-                    self.override[key] = val
+                    self._override.pop(alias)
+                    self._override[key] = val
 
-                self.aliases[alias] = key
+                self._aliases[alias] = key
         else:
             log.warning('Creating circular reference alias %s %s %s',
                         alias, key, self._real_key(key))
 
     def _real_key(self, key):
-        new_key = self.aliases.get(key)
-        if new_key:
+        new_key = self._aliases.get(key)
+        if new_key is not None:
             return self._real_key(new_key)
         else:
             return key
@@ -326,7 +365,7 @@ class Vyper(object):
         # if the requested key is an alias, then return the proper key
         key = self._real_key(key)
 
-        exists = self.config.get(key)
+        exists = self._config.get(key)
         return exists
 
     def set_default(self, key, value):
@@ -335,7 +374,7 @@ class Vyper(object):
         arg, config or env.
         """
         k = self._real_key(key.lower())
-        self.defaults[k] = value
+        self._defaults[k] = value
 
     def set(self, key, value):
         """Sets the value for the key in the override register.
@@ -343,13 +382,13 @@ class Vyper(object):
         args, config file, env, defaults or key/value store.
         """
         k = self._real_key(key.lower())
-        self.override[k] = value
+        self._override[k] = value
 
     def read_config(self, file_):
         """Vyper will read a configuration file, setting existing keys to
         `None` if the key does not exist in the file.
         """
-        self._unmarshall_reader(file_, self.config)
+        self._unmarshall_reader(file_, self._config)
 
     def _unmarshall_reader(self, file_, d):
         """Unmarshall a file into a dict."""
@@ -359,25 +398,25 @@ class Vyper(object):
         """Return all keys regardless where they are set."""
         d = {}
 
-        for k in self.defaults.keys():
+        for k in self._defaults.keys():
             d[k.lower()] = {}
 
-        for k in self.args.keys():
+        for k in self._args.keys():
             d[k.lower()] = {}
 
-        for k in self.env.keys():
+        for k in self._env.keys():
             d[k.lower()] = {}
 
-        for k in self.config.keys():
+        for k in self._config.keys():
             d[k.lower()] = {}
 
-        for k in self.kvstore.keys():
+        for k in self._kvstore.keys():
             d[k.lower()] = {}
 
-        for k in self.override.keys():
+        for k in self._override.keys():
             d[k.lower()] = {}
 
-        for k in self.aliases.keys():
+        for k in self._aliases.keys():
             d[k.lower()] = {}
 
         return d.keys()
@@ -394,46 +433,59 @@ class Vyper(object):
     def set_config_name(self, name):
         """Name for the config file. Does not include extension."""
         if name != '':
-            self.config_name = name
+            self._config_name = name
 
     def set_config_type(self, type_):
         """Sets the type of the configuration returned by the
         remote source, e.g. "json".
         """
         if type_ != '':
-            self.config_type = type_
+            self._config_type = type_
 
     def _get_config_type(self):
-        if self.config_type != '':
-            return self.config_type
+        if self._config_type != '':
+            return self._config_type
 
     def _get_config_file(self):
-        if self.config_file != '':
-            return self.config_file
+        if self._config_file != '':
+            return self._config_file
 
     def _search_in_path(self, path):
-        # TODO: implement this
-        pass
+        log.debug('Searching for config in {}'.format(path))
+        for ext in SUPPORTED_EXTS:
+            full_path = path+self._config_name+ext
+            log.debug('Checking for {}'.format(full_path))
+            if util.exists(path):
+                log.debug('Found: {}'.format(full_path))
+                return full_path
+        return ''
 
-    def _find_config_path(self):
+    def _find_config_file(self):
         """Search all `config_paths` for any config file.
         Returns the first path that exists (and is a config file).
         """
-        # TODO: implement this
+        log.info('Searching for config in: {}'.format(self._config_paths))
+
+        for cp in self._config_paths:
+            f = self._search_in_path(cp)
+            if f != '':
+                return f
+        raise errors.ConfigFileNotFoundError(
+            self._config_name, self._config_paths)
 
     def debug(self):
         """Prints all configuration registries for debugging purposes."""
         print('Aliases:')
-        pprint.pprint(self.aliases)
+        pprint.pprint(self._aliases)
         print('Override:')
-        pprint.pprint(self.override)
+        pprint.pprint(self._override)
         print('Args:')
-        pprint.pprint(self.args)
+        pprint.pprint(self._args)
         print('Env:')
-        pprint.pprint(self.env)
+        pprint.pprint(self._env)
         print('Key/Value Store:')
-        pprint.pprint(self.kvstore)
+        pprint.pprint(self._kvstore)
         print('Config:')
-        pprint.pprint(self.config)
+        pprint.pprint(self._config)
         print('Defaults:')
-        pprint.pprint(self.defaults)
+        pprint.pprint(self._defaults)

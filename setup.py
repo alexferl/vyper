@@ -12,7 +12,12 @@ setup(
     zip_safe=False,
     install_requires=[
         'future',
+        'pathlib',
         'PyYAML',
         'toml'
-    ]
+    ],
+    tests_require=[
+        'nose'
+    ],
+    test_suite='nose.collector'
 )

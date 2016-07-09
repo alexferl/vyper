@@ -1,6 +1,11 @@
 import json
+import logging
+import os
+import pathlib
 
 import yaml
+
+log = logging.getLogger('vyper.util')
 
 
 class ConfigParserError(Exception):
@@ -11,6 +16,24 @@ class ConfigParserError(Exception):
 
     def __str__(self):
         return 'While parsing config: {}'.format(self.message)
+
+
+def abs_pathify(in_path):
+    log.info('Trying to resolve absolute path to {}'.format(in_path))
+
+    try:
+        return pathlib.Path(in_path).resolve()
+    except (OSError, FileNotFoundError) as e:
+        log.error('Couldn\'t discover absolute path: {}'.format(e),)
+        return ''
+
+
+def exists(path):
+    try:
+        os.stat(path)
+        return True
+    except (OSError, FileNotFoundError):
+        return False
 
 
 def unmarshall_config_reader(file_, d, config_type):
