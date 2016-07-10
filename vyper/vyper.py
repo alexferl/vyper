@@ -2,7 +2,7 @@ import logging
 import os
 import pprint
 
-from . import errors, util
+from . import errors, remote, util
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('vyper')
@@ -11,7 +11,7 @@ log = logging.getLogger('vyper')
 SUPPORTED_EXTS = ['json', 'toml', 'yaml', 'yml']
 
 # Universally supported remote providers.
-SUPPORTED_REMOTE_PROVIDERS = ['etcd', 'consul']
+SUPPORTED_REMOTE_PROVIDERS = ['etcd', 'consul', 'zookeeper']
 
 
 class Vyper(object):
@@ -86,16 +86,14 @@ class Vyper(object):
         """Explicitly define the path, name and extension of the config file
         Vyper will use this and not check any of the config paths.
         """
-        if file_ != '':
-            self._config_file = file_
+        self._config_file = file_
 
     def set_env_prefix(self, prefix):
         """Define a prefix that ENVIRONMENT variables will use.
         e.g. if your prefix is "spf", the env registry will look
         for env. variables that start with "SPF_"
         """
-        if prefix != '':
-            self._env_prefix = prefix
+        self._env_prefix = prefix
 
     def _merge_with_env_prefix(self, key):
         if self._env_prefix != '':
@@ -119,13 +117,12 @@ class Vyper(object):
         """Add a path for Vyper to search for the config file in.
         Can be called multiple times to define multiple search paths.
         """
-        if path != '':
-            abspath = util.abs_pathify(path)
-            log.debug('adding %s to paths to search', self._config_paths)
-            if abspath not in self._config_paths:
-                self._config_paths.append(abspath)
+        abspath = util.abs_pathify(path)
+        log.debug('adding %s to paths to search', self._config_paths)
+        if abspath not in self._config_paths:
+            self._config_paths.append(abspath)
 
-    def add_remote_provider(self, provider, endpoint, path):
+    def add_remote_provider(self, provider, client, path):
         """Adds a remote configuration source.
         Remote Providers are searched in the order they are added.
         provider is a string value, "etcd" or "consul" are currently supported.
@@ -135,28 +132,20 @@ class Vyper(object):
         you should set path to /configs and set config name (set_config_name)
         to "myapp"
         """
-        # TODO: implement this
+        if provider not in SUPPORTED_REMOTE_PROVIDERS:
+            raise errors.UnsupportedRemoteProviderError(provider)
 
-    def add_secure_remote_provider(self, provider, endpoint, path,
-                                   secretkeyring):
-        """Adds a remote configuration source.
-        Secure Remote Providers are searched in the order they are added.
-        provider is a string value, "etcd" or "consul" are currently supported.
-        endpoint is the url. etcd requires http://ip:port consul requires
-        ip:port secretkeyring is the filepath to your openpgp secret keyring.
-        e.g. /etc/secrets/myring.gpg path is the path in the k/v store to
-        retrieve configuration.
-        To retrieve a config file called myapp.json from /configs/myapp.json
-        you should set path to /configs and set config name (set_config_name)
-        to"myapp"
-        Secure Remote Providers are implemented with
-        github.com/xordataexchange/crypt
-        """
-        # TODO: implement this
+        log.debug('adding %s:%s to remote provider list', provider,
+                  client.host)
+        rp = remote.RemoteProvider(provider, client, path)
+        if not self._provider_path_exists(rp):
+            self._remote_providers.append(rp)
 
-    def _provider_path_exists(self):
-        # TODO: implement this
-        pass
+    def _provider_path_exists(self, rp):
+        for p in self._remote_providers:
+            if p.path == rp.path:
+                return True
+        return False
 
     def _search_dict(self, d, key):
         if key in d:
@@ -432,9 +421,36 @@ class Vyper(object):
         """
         self._unmarshall_reader(file_, self._config)
 
+    def read_remote_config(self):
+        """Attempts to get configuration from a remote source
+        and read it in the remote configuration registry.
+        """
+        return self._get_key_value_config()
+
     def _unmarshall_reader(self, file_, d):
         """Unmarshall a file into a `dict`."""
         return util.unmarshall_config_reader(file_, d, self._get_config_type())
+
+    def _get_key_value_config(self):
+        """Retrieves the first found remote configuration."""
+        for rp in self._remote_providers:
+            val = self._get_remote_config(rp)
+            self._kvstore = val
+            return None
+        return errors.RemoteConfigError('No Files Found')
+
+    def _get_remote_config(self, provider):
+        reader = provider.get()
+        self._unmarshall_reader(reader, self._kvstore)
+        return self._kvstore
+
+    def _watch_key_value_config(self):
+        """Retrieves the first found remote configuration."""
+        # TODO: implement this
+
+    def _watch_remote_config(self):
+        # TODO: implement this
+        pass
 
     def all_keys(self, uppercase_keys=False):
         """Return all keys regardless where they are set."""
@@ -474,15 +490,13 @@ class Vyper(object):
 
     def set_config_name(self, name):
         """Name for the config file. Does not include extension."""
-        if name != '':
-            self._config_name = name
+        self._config_name = name
 
     def set_config_type(self, type_):
         """Sets the type of the configuration returned by the
         remote source, e.g. "json".
         """
-        if type_ != '':
-            self._config_type = type_
+        self._config_type = type_
 
     def _get_config_type(self):
         if self._config_type != '':

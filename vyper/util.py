@@ -1,10 +1,14 @@
-import json
 import logging
 import os
 import pathlib
 
 import pytoml as toml
 import yaml
+
+try:
+    import ujson as json
+except ImportError:
+    import json
 
 try:
     FileNotFoundError
