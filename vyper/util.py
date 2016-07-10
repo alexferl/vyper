@@ -3,7 +3,13 @@ import logging
 import os
 import pathlib
 
+import pytoml as toml
 import yaml
+
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = OSError
 
 log = logging.getLogger('vyper.util')
 
@@ -19,20 +25,20 @@ class ConfigParserError(Exception):
 
 
 def abs_pathify(in_path):
-    log.info('Trying to resolve absolute path to %s', in_path)
+    log.debug('Trying to resolve absolute path to %s', in_path)
 
     try:
         return pathlib.Path(in_path).resolve()
-    except (OSError, FileNotFoundError) as e:
+    except FileNotFoundError as e:
         log.error('Couldn\'t discover absolute path: %s', e)
         return ''
 
 
 def exists(path):
     try:
-        os.stat(path)
+        os.stat(str(path))
         return True
-    except (OSError, FileNotFoundError):
+    except FileNotFoundError:
         return False
 
 
@@ -42,20 +48,27 @@ def unmarshall_config_reader(file_, d, config_type):
     if config_type in ['yaml', 'yml']:
         try:
             f = yaml.load(file_)
-            d.update(yaml.load(f))
+            try:
+                d.update(yaml.load(f))
+            except AttributeError:  # to read files
+                d.update(f)
         except Exception as e:
             raise ConfigParserError(e)
 
     elif config_type == 'json':
         try:
-            f = json.load(file_)
+            f = json.loads(file_)
             d.update(f)
         except Exception as e:
             raise ConfigParserError(e)
 
     elif config_type == 'toml':
         try:
-            d.update(file_)
+            try:
+                f = toml.loads(file_)
+                d.update(f)
+            except AttributeError:  # to read streams
+                d.update(file_)
         except Exception as e:
             raise ConfigParserError(e)
 

@@ -1,13 +1,19 @@
 import argparse
-import io
 import json
-import os
+import tempfile
 import unittest
-from builtins import str as text
 
-import toml
+import os
+import pytoml as toml
 import vyper
 import yaml
+from builtins import str as text
+from vyper import errors
+
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = OSError
 
 
 yaml_example = '''Hacker: true
@@ -25,11 +31,11 @@ age: 35
 eyes : brown
 beard: true'''
 
-toml_example = 'title = "TOML Example"\n' \
-               '[owner]\n' \
-               'organization = "MongoDB"\n' \
-               'Bio = "MongoDB Chief Developer Advocate & Hacker at Large"\n' \
-               'dob = 1979-05-27T07:32:00Z # First class dates? Why not?'
+toml_example = '''title = "TOML Example"
+[owner]
+organization = "MongoDB"
+Bio = "MongoDB Chief Developer Advocate & Hacker at Large"
+dob = 1979-05-27T07:32:00Z # First class dates? Why not?'''
 
 json_example = {
     "id": "0001",
@@ -57,7 +63,7 @@ class TestVyper(unittest.TestCase):
         self.v._unmarshall_reader(r, self.v._config)
 
         self.v.set_config_type('json')
-        r = io.StringIO(text(json.dumps(json_example)))
+        r = json.dumps(json_example)
         self.v._unmarshall_reader(r, self.v._config)
 
         self.v.set_config_type('toml')
@@ -66,12 +72,12 @@ class TestVyper(unittest.TestCase):
 
     def _init_yaml(self):
         self.v.set_config_type('yaml')
-        r = yaml.dump(text(yaml_example))
+        r = yaml.dump(yaml_example)
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_json(self):
         self.v.set_config_type('json')
-        r = io.StringIO(text(json.dumps(json_example)))
+        r = json.dumps(json_example)
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_toml(self):
@@ -79,9 +85,35 @@ class TestVyper(unittest.TestCase):
         r = toml.loads(toml_example)
         self.v._unmarshall_reader(r, self.v._config)
 
-    # def test_basics(self):
-    #    self.v.set_config_file('/tmp/config.yaml')
-    #    self.assertEqual('/tmp/config.yaml', self.v._get_config_file())
+    def _init_dirs(self):
+        test_dirs = ['a a', 'b', 'c\c', 'D_']
+        config = 'improbable'
+
+        root = tempfile.mkdtemp()
+
+        def cleanup():
+            try:
+                os.removedirs(root)
+            except FileNotFoundError:
+                pass
+
+        os.chdir(root)
+
+        for dir_ in test_dirs:
+            os.mkdir(dir_, 0o0750)
+
+            f = '{0}.toml'.format(config)
+            flags = os.O_WRONLY | os.O_CREAT
+            rel_path = '{0}/{1}'.format(dir_, f)
+            abs_file_path = os.path.join(root, rel_path)
+            with os.fdopen(os.open(abs_file_path, flags, 0o0640), 'w') as fp:
+                fp.write("key = \"value is {0}\"\n".format(dir_))
+
+        return root, config, cleanup
+
+    def test_basics(self):
+        self.v.set_config_file('/tmp/config.yaml')
+        self.assertEqual('/tmp/config.yaml', self.v._get_config_file())
 
     def test_default(self):
         self.v.set_default('age', 45)
@@ -89,6 +121,16 @@ class TestVyper(unittest.TestCase):
 
         self.v.set_default('clothing.jacket', 'slacks')
         self.assertEqual('slacks', self.v.get('clothing.jacket'))
+
+    def test_unmarshalling(self):
+        # TODO: not complete
+        self.v.set_config_type('yaml')
+        r = yaml.dump(yaml_example)
+        self.v._unmarshall_reader(r, self.v._config)
+        self.assertTrue(self.v.in_config('name'))
+        self.assertFalse(self.v.in_config('state'))
+        self.assertEqual('steve', self.v.get('name'))
+        self.assertEqual(35, self.v.get('age'))
 
     def test_override(self):
         self.v.set('age', 40)
@@ -104,15 +146,15 @@ class TestVyper(unittest.TestCase):
         self.v.set('years', 45)
         self.assertEqual(45, self.v.get('age'))
 
-    def test_alias_in_config_file(self):
-        # the config file specifies "beard". If we make this an alias for
-        # "hasbeard", we still want the old config file to work with beard.
-        self._init_yaml()
-        self.v.register_alias('beard', 'hasbeard')
-        # self.v.debug()
-        self.assertEqual(True, self.v.get('hasbeard'))
-        self.v.set('hasbeard', False)
-        self.assertEqual(False, self.v.get('beard'))
+    #def test_alias_in_config_file(self):
+    #    # the config file specifies "beard". If we make this an alias for
+    #    # "hasbeard", we still want the old config file to work with beard.
+    #    self._init_yaml()
+    #    self.v.register_alias('beard', 'hasbeard')
+    #    # self.v.debug()
+    #    self.assertEqual(True, self.v.get('hasbeard'))
+    #    self.v.set('hasbeard', False)
+    #    self.assertEqual(False, self.v.get('beard'))
 
     def test_yaml(self):
         self._init_yaml()
@@ -182,7 +224,18 @@ class TestVyper(unittest.TestCase):
         self.v.register_alias('Roo', 'baz')
 
     def test_unmarshall(self):
-        pass
+        self.v.set_default('port', 1313)
+        self.v.set('name', 'Steve')
+
+        cls = type('MyClass', (), {})
+        c = self.v.unmarshall(cls)
+
+        self.assertEqual(c.name, self.v.get('name'))
+        self.assertEqual(c.port, self.v.get('port'))
+
+        self.v.set('port', 1234)
+        c = self.v.unmarshall(cls)
+        self.assertEqual(c.port, self.v.get('port'))
 
     def test_bind_args(self):
         arg_set = argparse.ArgumentParser()
@@ -220,6 +273,44 @@ class TestVyper(unittest.TestCase):
         self.v.set('helloworld', 'fubar')
         self.assertTrue(self.v.is_set('helloworld'))
 
+    def test_dirs_search(self):
+        root, config, cleanup = self._init_dirs()
+
+        try:
+            v = vyper.Vyper()
+            v.set_config_name(config)
+            v.set_config_type('toml')
+            v.set_default('key', 'default')
+
+            entries = os.listdir(root)
+            for e in entries:
+                if os.path.isdir(e):
+                    v.add_config_path(e)
+
+            v.read_in_config()
+
+            self.assertEqual('value is ' + v._config_paths[0].name,
+                             v.get('key'))
+        finally:
+            cleanup()
+
+    def test_wrong_dirs_search_not_found(self):
+        _, config, cleanup = self._init_dirs()
+
+        try:
+            v = vyper.Vyper()
+            v.set_config_name(config)
+            v.set_default('key', 'default')
+
+            v.add_config_path('whattayoutalkingabout')
+            v.add_config_path('thispathainthere')
+
+            self.assertRaises(errors.UnsupportedConfigError, v.read_in_config)
+
+            self.assertEqual('default', v.get('key'))
+        finally:
+            cleanup()
+
     def test_bound_case_sensitivity(self):
         self._init_yaml()
         self.assertEqual('brown', self.v.get('eyes'))
@@ -235,3 +326,33 @@ class TestVyper(unittest.TestCase):
 
         self.v.bind_arg('eYEs', vars(args[0])['eyeballs'])
         self.assertEqual('green', self.v.get('eyes'))
+
+    def test_sub(self):
+        self.v.set_config_type('yaml')
+        self.v.read_config(yaml.dump(text(yaml_example)))
+
+        subv = self.v.sub('clothing')
+        self.assertEqual(self.v.get('clothing.pants.size'),
+                         subv.get('pants.size'))
+
+        subv = self.v.sub('clothing.pants')
+        self.assertEqual(self.v.get('clothing.pants.size'), subv.get('size'))
+
+        subv = self.v.sub('clothing.pants.size')
+        self.assertEqual(subv, None)
+
+    def test_unmarshalling_with_aliases(self):
+        self.v.set_default('Id', 1)
+        self.v.set('name', 'Steve')
+        self.v.set('lastname', 'Owen')
+
+        self.v.register_alias('UserId', 'Id')
+        self.v.register_alias('Firstname', 'name')
+        self.v.register_alias('Surname', 'lastname')
+
+        cls = type('MyClass', (), {})
+        c = self.v.unmarshall(cls)
+
+        self.assertEqual(c.id, 1)
+        self.assertEqual(c.firstname, 'Steve')
+        self.assertEqual(c.surname, 'Owen')

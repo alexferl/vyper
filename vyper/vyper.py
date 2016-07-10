@@ -121,7 +121,7 @@ class Vyper(object):
         """
         if path != '':
             abspath = util.abs_pathify(path)
-            log.info('adding %s to paths to search', self._config_paths)
+            log.debug('adding %s to paths to search', self._config_paths)
             if abspath not in self._config_paths:
                 self._config_paths.append(abspath)
 
@@ -192,7 +192,26 @@ class Vyper(object):
     def sub(self, key):
         """Returns new Vyper instance representing a sub tree of this instance.
         """
-        # TODO: implement this
+        subv = Vyper()
+        data = self.get(key)
+        if isinstance(data, dict):
+            subv._config = data
+            return subv
+        else:
+            return None
+
+    def unmarshall_key(self, key, cls):
+        """Takes a single key and unmarshalls it into a class."""
+        return setattr(cls, key, self.get(key))
+
+    def unmarshall(self, cls):
+        """Unmarshalls the config into a class. Make sure that the tags on
+        the attributes of the class are properly set.
+        """
+        for k, v in self.all_settings().items():
+            setattr(cls, k, v)
+
+        return cls
 
     def bind_args(self, args):
         return self.bind_arg_values(args)
@@ -275,7 +294,15 @@ class Vyper(object):
             log.debug('%s found in config: %s', key, val)
             return val
 
-        # TODO: implement Test for nested config parameter
+        # Test for nested config parameter
+        if self._key_delimiter in key:
+            path = key.split(self._key_delimiter)
+
+            source = self._find(path[0])
+            if source is not None and isinstance(source, dict):
+                val = self._search_dict(source, path[-1])
+                log.debug('%s found in nested config: %s', key, val)
+                return val
 
         val = self._kvstore.get(key)
         if val is not None:
@@ -384,6 +411,21 @@ class Vyper(object):
         k = self._real_key(key.lower())
         self._override[k] = value
 
+    def read_in_config(self):
+        """Vyper will discover and load the configuration file from disk
+        and key/value stores, searching in one of the defined paths.
+        """
+        log.debug('Attempting to read in config file')
+        if self._get_config_type() not in SUPPORTED_EXTS:
+            raise errors.UnsupportedConfigError(self._get_config_type())
+
+        with open(self._get_config_file()) as fp:
+            f = fp.read()
+
+        self._config = {}
+
+        return self._unmarshall_reader(f, self._config)
+
     def read_config(self, file_):
         """Vyper will read a configuration file, setting existing keys to
         `None` if the key does not exist in the file.
@@ -391,41 +433,41 @@ class Vyper(object):
         self._unmarshall_reader(file_, self._config)
 
     def _unmarshall_reader(self, file_, d):
-        """Unmarshall a file into a dict."""
+        """Unmarshall a file into a `dict`."""
         return util.unmarshall_config_reader(file_, d, self._get_config_type())
 
-    def all_keys(self):
+    def all_keys(self, uppercase_keys=False):
         """Return all keys regardless where they are set."""
         d = {}
 
         for k in self._defaults.keys():
-            d[k.lower()] = {}
+            d[k.upper() if uppercase_keys else k.lower()] = {}
 
         for k in self._args.keys():
-            d[k.lower()] = {}
+            d[k.upper() if uppercase_keys else k.lower()] = {}
 
         for k in self._env.keys():
-            d[k.lower()] = {}
+            d[k.upper() if uppercase_keys else k.lower()] = {}
 
         for k in self._config.keys():
-            d[k.lower()] = {}
+            d[k.upper() if uppercase_keys else k.lower()] = {}
 
         for k in self._kvstore.keys():
-            d[k.lower()] = {}
+            d[k.upper() if uppercase_keys else k.lower()] = {}
 
         for k in self._override.keys():
-            d[k.lower()] = {}
+            d[k.upper() if uppercase_keys else k.lower()] = {}
 
         for k in self._aliases.keys():
-            d[k.lower()] = {}
+            d[k.upper() if uppercase_keys else k.lower()] = {}
 
         return d.keys()
 
-    def all_settings(self):
+    def all_settings(self, uppercase_keys=False):
         """Return all settings as a `dict`."""
         d = {}
 
-        for k in self.all_keys():
+        for k in self.all_keys(uppercase_keys):
             d[k] = self.get(k)
 
         return d
@@ -446,34 +488,53 @@ class Vyper(object):
         if self._config_type != '':
             return self._config_type
 
+        cf = self._get_config_file()
+        ext = os.path.splitext(cf)
+
+        if len(ext) > 1:
+            return ext[1][1:]
+        else:
+            return ''
+
     def _get_config_file(self):
         if self._config_file != '':
             return self._config_file
 
+        try:
+            cf = self._find_config_file()
+        except errors.ConfigFileNotFoundError:
+            return ''
+
+        self._config_file = cf
+        return self._get_config_file()
+
     def _search_in_path(self, path):
         log.debug('Searching for config in {0}'.format(path))
+
         for ext in SUPPORTED_EXTS:
-            full_path = "{0}{1}{2}".format(path, self._config_name, ext)
+            full_path = "{0}/{1}.{2}".format(path, self._config_name, ext)
             log.debug('Checking for {0}'.format(full_path))
-            if util.exists(path):
+            if util.exists(full_path):
                 log.debug('Found: {0}'.format(full_path))
                 return full_path
+
         return ''
 
     def _find_config_file(self):
         """Search all `config_paths` for any config file.
         Returns the first path that exists (and is a config file).
         """
-        log.info('Searching for config in: {0}'.format(self._config_paths))
+        log.debug('Searching for config in: {0}'.format(self._config_paths))
 
         for cp in self._config_paths:
             f = self._search_in_path(cp)
             if f != '':
                 return f
+
         raise errors.ConfigFileNotFoundError(
             self._config_name, self._config_paths)
 
-    def debug(self):
+    def debug(self):  # pragma: no cover
         """Prints all configuration registries for debugging purposes."""
         print('Aliases:')
         pprint.pprint(self._aliases)
