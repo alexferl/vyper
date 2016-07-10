@@ -11,13 +11,14 @@ setup(
     packages=['vyper'],
     zip_safe=False,
     install_requires=[
-        'future',
-        'pathlib',
-        'pytoml',
-        'PyYAML'
+        'distconfig>=0.1.0',
+        'future>=0.15.2',
+        'pathlib>=1.0.1',
+        'pytoml>=0.1.10',
+        'PyYAML>=3.11'
     ],
     tests_require=[
-        'nose'
+        'nose>=1.3.7'
     ],
     test_suite='nose.collector',
     platforms='any',

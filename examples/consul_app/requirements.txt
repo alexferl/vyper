@@ -1,0 +1,2 @@
+python-consul>=0.6.1
+vyper

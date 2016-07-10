@@ -1,10 +1,11 @@
 import logging
 import os
 import pprint
+from builtins import str as text
 
 from . import errors, remote, util
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('vyper')
 
 # Universally supported extensions.
@@ -136,8 +137,8 @@ class Vyper(object):
             raise errors.UnsupportedRemoteProviderError(provider)
 
         log.debug('adding %s:%s to remote provider list', provider,
-                  client.host)
-        rp = remote.RemoteProvider(provider, client, path)
+                  client)
+        rp = remote.RemoteProvider(provider, client, path, self._config_type)
         if not self._provider_path_exists(rp):
             self._remote_providers.append(rp)
 
@@ -177,6 +178,24 @@ class Vyper(object):
             return None
 
         return val
+
+    def get_string(self, key):
+        return str(self.get(key))
+
+    def get_bool(self, key):
+        return bool(self.get(key))
+
+    def get_int(self, key):
+        return int(self.get(key))
+
+    def get_float(self, key):
+        return float(self.get(key))
+
+    def get_unicode(self, key):
+        return text(self.get(key))
+
+    def get_bytes(self, key):
+        return b'{0}'.format(self.get(key))
 
     def sub(self, key):
         """Returns new Vyper instance representing a sub tree of this instance.
@@ -437,7 +456,7 @@ class Vyper(object):
             val = self._get_remote_config(rp)
             self._kvstore = val
             return None
-        return errors.RemoteConfigError('No Files Found')
+        raise errors.RemoteConfigError('No Files Found')
 
     def _get_remote_config(self, provider):
         reader = provider.get()
