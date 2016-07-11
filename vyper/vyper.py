@@ -3,16 +3,10 @@ import os
 import pprint
 from builtins import str as text
 
-from . import errors, remote, util
+from . import constants, errors, remote, util
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('vyper')
-
-# Universally supported extensions.
-SUPPORTED_EXTS = ['json', 'toml', 'yaml', 'yml']
-
-# Universally supported remote providers.
-SUPPORTED_REMOTE_PROVIDERS = ['etcd', 'consul', 'zookeeper']
 
 
 class Vyper(object):
@@ -51,6 +45,7 @@ class Vyper(object):
             "endpoint": "https://localhost"
         }
     """
+
     def __init__(self, config_name='config', key_delimiter='.'):
         # Delimiter that separates a list of keys
         # used to access a nested value in one go.
@@ -119,7 +114,7 @@ class Vyper(object):
         Can be called multiple times to define multiple search paths.
         """
         abspath = util.abs_pathify(path)
-        log.debug('adding %s to paths to search', self._config_paths)
+        log.info('adding %s to paths to search', self._config_paths)
         if abspath not in self._config_paths:
             self._config_paths.append(abspath)
 
@@ -133,11 +128,22 @@ class Vyper(object):
         you should set path to /configs and set config name (set_config_name)
         to "myapp"
         """
-        if provider not in SUPPORTED_REMOTE_PROVIDERS:
+        if provider not in constants.SUPPORTED_REMOTE_PROVIDERS:
             raise errors.UnsupportedRemoteProviderError(provider)
 
-        log.debug('adding %s:%s to remote provider list', provider,
-                  client)
+        host = ''
+        if provider == 'etcd':
+            host = '{0}://{1}:{2}'.format(client.protocol, client.host,
+                                          client.port)
+        elif provider == 'consul':
+            host = '{0}://{1}:{2}'.format(client.http.scheme, client.http.host,
+                                          client.http.port)
+        elif provider == 'zookeeper':
+            host = ','.join(
+                str('{0}:{1}'.format(h[0], h[1])) for h in client.hosts)
+
+        log.info('adding %s:%s to remote provider list', provider, host)
+
         rp = remote.RemoteProvider(provider, client, path, self._config_type)
         if not self._provider_path_exists(rp):
             self._remote_providers.append(rp)
@@ -423,8 +429,8 @@ class Vyper(object):
         """Vyper will discover and load the configuration file from disk
         and key/value stores, searching in one of the defined paths.
         """
-        log.debug('Attempting to read in config file')
-        if self._get_config_type() not in SUPPORTED_EXTS:
+        log.info('Attempting to read in config file')
+        if self._get_config_type() not in constants.SUPPORTED_EXTS:
             raise errors.UnsupportedConfigError(self._get_config_type())
 
         with open(self._get_config_file()) as fp:
@@ -544,7 +550,7 @@ class Vyper(object):
     def _search_in_path(self, path):
         log.debug('Searching for config in {0}'.format(path))
 
-        for ext in SUPPORTED_EXTS:
+        for ext in constants.SUPPORTED_EXTS:
             full_path = "{0}/{1}.{2}".format(path, self._config_name, ext)
             log.debug('Checking for {0}'.format(full_path))
             if util.exists(full_path):
@@ -557,7 +563,7 @@ class Vyper(object):
         """Search all `config_paths` for any config file.
         Returns the first path that exists (and is a config file).
         """
-        log.debug('Searching for config in: {0}'.format(self._config_paths))
+        log.info('Searching for config in: {0}'.format(self._config_paths))
 
         for cp in self._config_paths:
             f = self._search_in_path(cp)

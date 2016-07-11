@@ -41,5 +41,5 @@ class ConfigFileNotFoundError(Exception):
                                                       *args)
 
     def __str__(self):
-        return 'Config File {} Not Found in {0}'.format(self.message,
-                                                        self.locations)
+        return 'Config File {0} Not Found in {1}'.format(self.message,
+                                                         self.locations)

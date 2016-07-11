@@ -29,7 +29,7 @@ class ConfigParserError(Exception):
 
 
 def abs_pathify(in_path):
-    log.debug('Trying to resolve absolute path to %s', in_path)
+    log.info('Trying to resolve absolute path to %s', in_path)
 
     try:
         return pathlib.Path(in_path).resolve()

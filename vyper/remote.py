@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from distconfig import Proxy
 import pytoml as toml
 import yaml
@@ -7,7 +9,7 @@ try:
 except ImportError:
     import json
 
-from . import errors, vyper
+from . import constants, errors
 
 PROVIDER_TYPE = {
     'consul': 'distconfig.backends.consul.ConsulBackend',
@@ -18,7 +20,7 @@ PROVIDER_TYPE = {
 
 class RemoteProvider(object):
     def __init__(self, provider, client, path, config_type):
-        if config_type != '' and config_type in vyper.SUPPORTED_EXTS:
+        if config_type != '' and config_type in constants.SUPPORTED_EXTS:
             self.config_type = config_type
         else:
             raise errors.UnsupportedConfigError(config_type)
@@ -42,7 +44,10 @@ class RemoteProvider(object):
             return toml.loads
 
     def get(self):
-        d = {k: v for k, v in self.config.items()}
+        d = {}
+        for k, v in self.config.items():
+            d[k] = v
+
         if self.config_type != 'toml':
             return json.dumps(d)
         else:

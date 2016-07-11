@@ -290,7 +290,7 @@ class TestVyper(unittest.TestCase):
             v.read_in_config()
 
             self.assertEqual('value is ' + v._config_paths[0].name,
-                             v.get('key'))
+                             v.get_string('key'))
         finally:
             cleanup()
 
@@ -307,7 +307,7 @@ class TestVyper(unittest.TestCase):
 
             self.assertRaises(errors.UnsupportedConfigError, v.read_in_config)
 
-            self.assertEqual('default', v.get('key'))
+            self.assertEqual('default', v.get_string('key'))
         finally:
             cleanup()
 
