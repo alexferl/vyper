@@ -3,7 +3,7 @@ import os
 import pprint
 from builtins import str as text
 
-from . import constants, errors, remote, util
+from . import constants, errors, remote, util, watch
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('vyper')
@@ -74,9 +74,15 @@ class Vyper(object):
         self._env = {}
         self._aliases = {}
 
+        self._on_config_change = None
+
+    def on_config_change(self, func, *args, **kwargs):
+        self._on_config_change = lambda: func(*args, **kwargs)
+
     def watch_config(self):
-        # TODO: implement this
-        pass
+        config_file = self._get_config_file()
+        watcher = watch.get_watcher(config_file, self)
+        watcher.start()
 
     def set_config_file(self, file_):
         """Explicitly define the path, name and extension of the config file
@@ -440,11 +446,37 @@ class Vyper(object):
 
         return self._unmarshall_reader(f, self._config)
 
+    def merge_in_config(self):
+        log.info('Attempting to merge in config file')
+        if self._get_config_type() not in constants.SUPPORTED_EXTS:
+            raise errors.UnsupportedConfigError(self._get_config_type())
+
+        file_ = self._get_config_file()
+
+        return self.merge_config(file_)
+
     def read_config(self, file_):
         """Vyper will read a configuration file, setting existing keys to
         `None` if the key does not exist in the file.
         """
         self._unmarshall_reader(file_, self._config)
+
+    def merge_config(self, file_):
+        if self._config is None:
+            self._config = {}
+
+        cfg = {}
+        cfg = self._unmarshall_reader(file_, cfg)
+
+        self._merge_dicts(cfg, self._config)
+
+    def _merge_dicts(self, src, target):
+        for k, v in src.items():
+            if k not in target:
+                target[k] = v
+            elif isinstance(v, dict):
+                self._merge_dicts(v, target[k])
+                # return target
 
     def read_remote_config(self):
         """Attempts to get configuration from a remote source
@@ -455,6 +487,12 @@ class Vyper(object):
     def _unmarshall_reader(self, file_, d):
         """Unmarshall a file into a `dict`."""
         return util.unmarshall_config_reader(file_, d, self._get_config_type())
+
+    def _insensitivize_dicts(self):
+        util.insensitivize_dict(self._config)
+        util.insensitivize_dict(self._defaults)
+        util.insensitivize_dict(self._override)
+        util.insensitivize_dict(self._kvstore)
 
     def _get_key_value_config(self):
         """Retrieves the first found remote configuration."""
@@ -471,11 +509,16 @@ class Vyper(object):
 
     def _watch_key_value_config(self):
         """Retrieves the first found remote configuration."""
-        # TODO: implement this
+        for rp in self._remote_providers:
+            val = self._watch_remote_config(rp)
+            self._kvstore = val
 
-    def _watch_remote_config(self):
-        # TODO: implement this
-        pass
+        raise errors.RemoteConfigError('No Files Found')
+
+    def _watch_remote_config(self, provider):
+        reader = provider.watch()
+        self._unmarshall_reader(reader, self._kvstore)
+        return self._kvstore
 
     def all_keys(self, uppercase_keys=False):
         """Return all keys regardless where they are set."""

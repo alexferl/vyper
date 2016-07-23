@@ -1,2 +1,2 @@
-python-etcd>=0.4.3
+python-etcd>=0.4
 vyper

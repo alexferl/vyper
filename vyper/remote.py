@@ -54,5 +54,4 @@ class RemoteProvider(object):
             return d
 
     def watch(self):
-        # TODO: implement this
-        pass
+        self.get()

@@ -28,6 +28,14 @@ class ConfigParserError(Exception):
         return 'While parsing config: {0}'.format(self.message)
 
 
+def insensitivize_dict(d):
+    for k, v in d.items():
+        lower = k.lower()
+        if k != lower:
+            d.pop(k, None)
+            d[lower] = v
+
+
 def abs_pathify(in_path):
     log.info('Trying to resolve absolute path to %s', in_path)
 

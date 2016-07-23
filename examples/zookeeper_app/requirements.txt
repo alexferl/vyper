@@ -1,2 +1,2 @@
-kazoo>=2.2.1
+kazoo>=2.2
 vyper

@@ -1,0 +1,7 @@
+distconfig>=0.1
+future>=0.15
+pathlib>=0.1
+pytoml>=0.1
+PyYAML>=3.11
+watchdog>=0.8
+
