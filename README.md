@@ -229,7 +229,7 @@ The following functions and methods exist:
  * `get_bool(key) : bool`
  * `get_float(key) : float`
  * `get_int(key) : int`
- * `get_string(key) : string`
+ * `get_string(key) : str`
  * `is_set(key) : bool`
 
 One important thing to recognize is that each get function will return a zero
