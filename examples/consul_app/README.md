@@ -14,7 +14,7 @@ $ curl -X PUT -d 'hello: "from consul!"' http://localhost:8500/v1/kv/config.yaml
 ## Running example
 ```
 $ git clone https://github.com/admiralobvious/vyper.git
-$ cd vyper/examples/consul/app
+$ cd vyper/examples/consul_app
 $ virtualenv venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
