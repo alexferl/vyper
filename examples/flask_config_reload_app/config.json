@@ -1,0 +1,6 @@
+{
+  "debug": true,
+  "admin_username": "admin",
+  "admin_password": "password",
+  "hello": "from flask!"
+}

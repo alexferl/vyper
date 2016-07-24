@@ -18,7 +18,7 @@ v.on_config_change(update_config)
 
 @app.route('/')
 def hello():
-    return app.config['ADMIN_USERNAME']
+    return 'Hello ' + app.config['HELLO']
 
 if __name__ == '__main__':
     app.run(use_reloader=False)
