@@ -38,7 +38,6 @@ class BaseWatcher(object):
         observer.start()
         try:
             while True:
-                print('running')
                 event = self.event
                 if event is not None and event.src_path == self.config_file:
                     self.v.read_in_config()

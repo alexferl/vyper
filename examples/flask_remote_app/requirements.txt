@@ -1,0 +1,3 @@
+Flask>=0.11
+python-etcd>=0.4
+vyper

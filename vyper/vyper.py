@@ -75,6 +75,7 @@ class Vyper(object):
         self._aliases = {}
 
         self._on_config_change = None
+        self._on_remote_config_change = None
 
     def on_config_change(self, func, *args, **kwargs):
         self._on_config_change = lambda: func(*args, **kwargs)
@@ -150,7 +151,7 @@ class Vyper(object):
 
         log.info('adding %s:%s to remote provider list', provider, host)
 
-        rp = remote.RemoteProvider(provider, client, path, self._config_type)
+        rp = remote.RemoteProvider(provider, client, path, self)
         if not self._provider_path_exists(rp):
             self._remote_providers.append(rp)
 
@@ -500,6 +501,7 @@ class Vyper(object):
             val = self._get_remote_config(rp)
             self._kvstore = val
             return None
+
         raise errors.RemoteConfigError('No Files Found')
 
     def _get_remote_config(self, provider):
@@ -507,18 +509,19 @@ class Vyper(object):
         self._unmarshall_reader(reader, self._kvstore)
         return self._kvstore
 
-    def _watch_key_value_config(self):
-        """Retrieves the first found remote configuration."""
+    def on_remote_config_change(self, func, *args, **kwargs):
+        self._on_remote_config_change = lambda x: func(*args, **kwargs)
+
         for rp in self._remote_providers:
-            val = self._watch_remote_config(rp)
-            self._kvstore = val
+            rp.add_listener(self._on_remote_config_change)
+            return None
+
+    def watch_remote_config(self):
+        for rp in self._remote_providers:
+            rp.add_listener()
+            return None
 
         raise errors.RemoteConfigError('No Files Found')
-
-    def _watch_remote_config(self, provider):
-        reader = provider.watch()
-        self._unmarshall_reader(reader, self._kvstore)
-        return self._kvstore
 
     def all_keys(self, uppercase_keys=False):
         """Return all keys regardless where they are set."""

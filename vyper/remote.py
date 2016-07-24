@@ -19,21 +19,32 @@ PROVIDER_TYPE = {
 
 
 class RemoteProvider(object):
-    def __init__(self, provider, client, path, config_type):
+    def __init__(self, provider, client, path, v):
+        self.v = v
+        config_type = self.v._config_type
         if config_type != '' and config_type in constants.SUPPORTED_EXTS:
             self.config_type = config_type
         else:
             raise errors.UnsupportedConfigError(config_type)
 
         provider = PROVIDER_TYPE.get(provider)
-        proxy = Proxy.configure(provider,
-                                client=client,
-                                parser=self._get_parser())
-        self.config = proxy.get_config(path)
+        self.proxy = Proxy.configure(provider,
+                                     client=client,
+                                     parser=self._get_parser())
 
-        self.provider = provider
-        self.client = client
-        self.path = path
+        self.config = self.proxy.get_config(path)
+
+    @property
+    def provider(self):
+        return self.provider
+
+    @property
+    def client(self):
+        return self.client
+
+    @property
+    def path(self):
+        return self.path
 
     def _get_parser(self):
         if self.config_type == 'json':
@@ -53,5 +64,12 @@ class RemoteProvider(object):
         else:
             return d
 
-    def watch(self):
-        self.get()
+    def add_listener(self, cb=None):
+        if cb is not None:
+            self.proxy.backend.add_listener(cb)
+        else:
+            self.proxy.backend.add_listener(self._update_kvstore)
+
+    def _update_kvstore(self, e):
+        self.v._kvstore = e
+
