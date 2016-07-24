@@ -82,8 +82,8 @@ where a configuration file is expected.
 ```python
 v.set_config_name('config')  # name of config file (without extension)
 v.add_config_path('/etc/appname/')  # path to look for the config file in
-v.AddConfigPath('$HOME/.appname')  # call multiple times to add many search paths
-v.AddConfigPath('.')  # optionally look for config in the working directory
+v.add_config_path('$HOME/.appname')  # call multiple times to add many search paths
+v.add_config_path('.')  # optionally look for config in the working directory
 v.read_in_config()  # Find and read the config file
 ```
 
