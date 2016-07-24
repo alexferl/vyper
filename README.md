@@ -1,6 +1,6 @@
 # Vyper
 
-Python configuration with (more) fangs! Python port of the very awesome [viper](https://github.com/spf13/viper) for Go.
+Python configuration with (more) fangs! Python port of the very awesome [Viper](https://github.com/spf13/viper) for Go.
 
 ## What is Vyper?
 
