@@ -1,6 +1,6 @@
 **still in development, no releases yet**
 
-# Vyper
+# Vyper [![Build Status](https://travis-ci.org/admiralobvious/vyper.svg?branch=master)](https://travis-ci.org/admiralobvious/vyper)
 
 Python configuration with (more) fangs! Python port of the very awesome [Viper](https://github.com/spf13/viper) for Go.
 
