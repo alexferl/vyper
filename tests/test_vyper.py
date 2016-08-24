@@ -94,7 +94,7 @@ class TestVyper(unittest.TestCase):
         def cleanup():
             try:
                 os.removedirs(root)
-            except FileNotFoundError:
+            except (FileNotFoundError, OSError):
                 pass
 
         os.chdir(root)
