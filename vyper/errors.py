@@ -36,7 +36,7 @@ class ConfigFileNotFoundError(Exception):
     """Denotes failing to find configuration file."""
     def __init__(self, message, locations, *args):
         self.message = message
-        self.locations = locations
+        self.locations = ', '.join(str(l) for l in locations)
         super(ConfigFileNotFoundError, self).__init__(message, locations,
                                                       *args)
 
