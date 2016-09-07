@@ -37,12 +37,12 @@ def insensitivize_dict(d):
 
 
 def abs_pathify(in_path):
-    log.info('Trying to resolve absolute path to %s', in_path)
+    log.info('Trying to resolve absolute path to {0}'.format(in_path))
 
     try:
         return pathlib.Path(in_path).resolve()
     except FileNotFoundError as e:
-        log.error('Couldn\'t discover absolute path: %s', e)
+        log.error('Couldn\'t discover absolute path: {0}'.format(e))
         return ''
 
 

@@ -121,8 +121,8 @@ class Vyper(object):
         Can be called multiple times to define multiple search paths.
         """
         abspath = util.abs_pathify(path)
-        log.info('adding %s to paths to search', self._config_paths)
         if abspath not in self._config_paths:
+            log.info('Adding {0} to paths to search'.format(abspath))
             self._config_paths.append(abspath)
 
     def add_remote_provider(self, provider, client, path):
@@ -149,7 +149,8 @@ class Vyper(object):
             host = ','.join(
                 str('{0}:{1}'.format(h[0], h[1])) for h in client.hosts)
 
-        log.info('adding %s:%s to remote provider list', provider, host)
+        log.info('Adding {0}:{1} to remote provider list'.format(
+            provider, host))
 
         rp = remote.RemoteProvider(provider, client, path, self)
         if not self._provider_path_exists(rp):
@@ -284,35 +285,35 @@ class Vyper(object):
 
         val = self._args.get(key)
         if val is not None:
-            log.debug('%s found in args: %s', key, val)
+            log.debug('{0} found in args: {1}'.format(key, val))
             return val
 
         val = self._override.get(key)
         if val is not None:
-            log.debug('%s found in override: %s', key, val)
+            log.debug('{0} found in override: {1}'.format(key, val))
             return val
 
         if self._automatic_env_applied:
             # even if it hasn't been registered, if `automatic_env` is used,
             # check any `get` request
             val = self._get_env(self._merge_with_env_prefix(key))
-            if val != '':
-                log.debug('%s found in environment: %s', key, val)
+            if val is not None:
+                log.debug('{0} found in environment: {1}'.format(key, val))
                 return val
 
         env_key = self._env.get(key)
         if env_key is not None:
-            log.debug('%s registered as env var: %s', key, env_key)
+            log.debug('{0} registered as env var: {1}'.format(key, env_key))
             val = self._get_env(env_key)
-            if val != '':
-                log.debug('%s found in environment: %s', env_key, val)
+            if val is not None:
+                log.debug('{0} found in environment: {1}'.format(env_key, val))
                 return val
             else:
-                log.debug('%s env value unset', env_key)
+                log.debug('{0} env value unset'.format(env_key))
 
         val = self._config.get(key)
         if val is not None:
-            log.debug('%s found in config: %s', key, val)
+            log.debug('{0} found in config: {1}'.format(key, val))
             return val
 
         # Test for nested config parameter
@@ -322,17 +323,17 @@ class Vyper(object):
             source = self._find(path[0])
             if source is not None and isinstance(source, dict):
                 val = self._search_dict(source, path[-1])
-                log.debug('%s found in nested config: %s', key, val)
+                log.debug('{0} found in nested config: {1}'.format(key, val))
                 return val
 
         val = self._kvstore.get(key)
         if val is not None:
-            log.debug('%s found in key/value store: %s', key, val)
+            log.debug('{0} found in key/value store: {1}'.format(key, val))
             return val
 
         val = self._defaults.get(key)
         if val is not None:
-            log.debug('%s found in defaults: %s', key, val)
+            log.debug('{0} found in defaults: {1}'.format(key, val))
             return val
 
         return None
@@ -397,8 +398,8 @@ class Vyper(object):
 
                 self._aliases[alias] = key
         else:
-            log.warning('Creating circular reference alias %s %s %s',
-                        alias, key, self._real_key(key))
+            log.warning('Creating circular reference alias {0} {1} {2}'.format(
+                alias, key, self._real_key(key)))
 
     def _real_key(self, key):
         new_key = self._aliases.get(key)
@@ -594,7 +595,7 @@ class Vyper(object):
         return self._get_config_file()
 
     def _search_in_path(self, path):
-        log.debug('Searching for config in {0}'.format(path))
+        log.debug('Searching for config in: {0}'.format(path))
 
         for ext in constants.SUPPORTED_EXTS:
             full_path = "{0}/{1}.{2}".format(path, self._config_name, ext)
@@ -609,7 +610,8 @@ class Vyper(object):
         """Search all `config_paths` for any config file.
         Returns the first path that exists (and is a config file).
         """
-        log.info('Searching for config in: {0}'.format(self._config_paths))
+        log.info('Searching for config in: {0}'.format(
+            ', '.join(str(p) for p in self._config_paths)))
 
         for cp in self._config_paths:
             f = self._search_in_path(cp)
