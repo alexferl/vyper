@@ -63,7 +63,7 @@ Examples:
 
 ```python
 v.set_default('ContentDir', 'content')
-v.det_default('LayoutDir', 'layouts')
+v.set_default('LayoutDir', 'layouts')
 v.set_default('Taxonomies', {'tag': 'tags', 'category': 'categories'})
 ```
 
