@@ -30,9 +30,16 @@ class ConfigParserError(Exception):
 
 def insensitivize_dict(d):
     for k, v in d.items():
+        if isinstance(v, dict):
+            insensitivize_dict(v)
+        elif isinstance(v, list):
+            for i in v:
+                if isinstance(i, dict):
+                    insensitivize_dict(i)
+
         lower = k.lower()
         if k != lower:
-            d.pop(k, None)
+            del d[k]
             d[lower] = v
 
 
@@ -84,4 +91,4 @@ def unmarshall_config_reader(file_, d, config_type):
         except Exception as e:
             raise ConfigParserError(e)
 
-    return d
+    return insensitivize_dict(d)

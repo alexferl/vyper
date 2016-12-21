@@ -52,6 +52,25 @@ json_example = {
     }
 }
 
+json_camel_case_example = {
+    "Id": "0001",
+    "Type": "donut",
+    "Name": "Cake",
+    "PPU": 0.55,
+    "Batters": {
+        "Batter": [
+            {"Type": "Regular"},
+            {"Type": "Chocolate"},
+            {"Type": "Blueberry"},
+            {"Type": "Devil's Food"},
+        ],
+    },
+    "Prices": [
+        '0.42',
+        '0.82',
+    ],
+}
+
 
 class TestVyper(unittest.TestCase):
     def setUp(self):
@@ -75,9 +94,9 @@ class TestVyper(unittest.TestCase):
         r = yaml.dump(yaml_example)
         self.v._unmarshall_reader(r, self.v._config)
 
-    def _init_json(self):
+    def _init_json(self, fixture=None):
         self.v.set_config_type('json')
-        r = json.dumps(json_example)
+        r = json.dumps(fixture or json_example)
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_toml(self):
@@ -211,6 +230,21 @@ class TestVyper(unittest.TestCase):
     def test_case_insensitive(self):
         self.v.set('Title', 'Checking Case')
         self.assertEqual('Checking Case', self.v.get('tItle'))
+
+        self._init_json(fixture=json_camel_case_example)
+        self.assertEqual('0001', self.v.get('Id'))
+        self.assertEqual({
+            'batter': [
+                {'type': 'Regular'},
+                {'type': 'Chocolate'},
+                {'type': 'Blueberry'},
+                {'type': 'Devil\'s Food'},
+            ],
+        }, self.v.get('batters'))
+        self.assertEqual([
+            '0.42',
+            '0.82',
+        ], self.v.get('prices'))
 
     def test_aliases_of_aliases(self):
         self.v.register_alias('Foo', 'Bar')
