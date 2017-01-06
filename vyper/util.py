@@ -29,7 +29,8 @@ class ConfigParserError(Exception):
 
 
 def insensitivize_dict(d):
-    for k, v in d.items():
+    _d = d.copy()
+    for k, v in _d.items():
         if isinstance(v, dict):
             insensitivize_dict(v)
         elif isinstance(v, list):
