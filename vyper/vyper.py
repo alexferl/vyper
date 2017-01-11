@@ -490,12 +490,6 @@ class Vyper(object):
         """Unmarshall a file into a `dict`."""
         return util.unmarshall_config_reader(file_, d, self._get_config_type())
 
-    def _insensitivize_dicts(self):
-        util.insensitivize_dict(self._config)
-        util.insensitivize_dict(self._defaults)
-        util.insensitivize_dict(self._override)
-        util.insensitivize_dict(self._kvstore)
-
     def _get_key_value_config(self):
         """Retrieves the first found remote configuration."""
         for rp in self._remote_providers:
