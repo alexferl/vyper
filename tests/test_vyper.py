@@ -15,6 +15,13 @@ try:
 except NameError:
     FileNotFoundError = OSError
 
+yaml_doublication_in_nesting = '''
+sweet:
+  home:
+    alabama: yeap
+  job:
+    alabama: noway
+'''
 
 yaml_example = '''Hacker: true
 name: steve
@@ -151,6 +158,14 @@ class TestVyper(unittest.TestCase):
         self.assertEqual('steve', self.v.get('name'))
         self.assertEqual(35, self.v.get('age'))
 
+    def test_yaml_duplication_nested(self):
+
+        self.v.set_config_type('yaml')
+        r = yaml.dump(yaml_doublication_in_nesting)
+        self.v._unmarshall_reader(r, self.v._config)
+        self.assertEqual('yeap', self.v.get('sweet.home.alabama'))
+        self.assertEqual('noway', self.v.get('sweet.job.alabama'))
+
     def test_override(self):
         self.v.set('age', 40)
         self.assertEqual(40, self.v.get('age'))
@@ -165,7 +180,7 @@ class TestVyper(unittest.TestCase):
         self.v.set('years', 45)
         self.assertEqual(45, self.v.get('age'))
 
-    #def test_alias_in_config_file(self):
+    # def test_alias_in_config_file(self):
     #    # the config file specifies "beard". If we make this an alias for
     #    # "hasbeard", we still want the old config file to work with beard.
     #    self._init_yaml()

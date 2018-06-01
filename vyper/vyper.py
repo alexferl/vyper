@@ -162,14 +162,16 @@ class Vyper(object):
                 return True
         return False
 
-    def _search_dict(self, d, key):
-        if key in d:
-            return d[key]
-        for k, v in d.items():
-            if isinstance(v, dict):
-                item = self._search_dict(v, key)
-                if item is not None:
-                    return item
+    def _search_dict(self, d, keys):
+        if not keys:
+            return d
+        for key in keys:
+            if key in d and not isinstance(d[key], dict):
+                return d[key]
+            elif key in d:
+                return self._search_dict(d[key], keys[1::])
+            else:
+                return None
 
     def get(self, key):
         """Vyper is essentially repository for configurations.
@@ -186,7 +188,7 @@ class Vyper(object):
         if val is None:
             source = self._find(path[0].lower())
             if source is not None and isinstance(source, dict):
-                val = self._search_dict(source, path[-1])
+                val = self._search_dict(source, path[1::])
 
         if val is None:
             return None
@@ -322,7 +324,7 @@ class Vyper(object):
 
             source = self._find(path[0])
             if source is not None and isinstance(source, dict):
-                val = self._search_dict(source, path[-1])
+                val = self._search_dict(source, path[1::])
                 log.debug('{0} found in nested config: {1}'.format(key, val))
                 return val
 
@@ -349,7 +351,7 @@ class Vyper(object):
         if val is None:
             source = self._find(path[0].lower())
             if source is not None and isinstance(source, dict):
-                val = self._search_dict(source, path[-1])
+                val = self._search_dict(source, path[1::])
 
         return val is not None
 
