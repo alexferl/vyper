@@ -170,6 +170,74 @@ class TestVyper(unittest.TestCase):
         self.v.set('age', 40)
         self.assertEqual(40, self.v.get('age'))
 
+    def test_default_flags(self):
+        # Making sure that default param is not taken into account when settings flags
+        fp = vyper.FlagsProvider()
+        fp.add_argument(
+            '--app-name',
+            type=str,
+            default='app',
+            help='Application and process name')
+        self.v.bind_flags(fp, ["test.py"])
+        self.assertEqual(None, self.v.get('app_name'))
+
+    def test_flags_with_value(self):
+        fp = vyper.FlagsProvider()
+        fp.add_argument(
+            '--app-name',
+            type=str,
+            help='Application and process name')
+        fp.add_argument('--env',
+                        type=str,
+                        choices=['dev', 'pre-prod', 'prod'],
+                        help='Application env (default %(default)s)')
+        self.v.bind_flags(fp, ["test.py", "--app-name=cmd-app", "--env=prod"])
+        self.assertEqual('cmd-app', self.v.get('app_name'))
+        self.assertEqual('prod', self.v.get('env'))
+
+    def test_flags_with_bad_value(self):
+        fp = vyper.FlagsProvider()
+        fp.add_argument('--app-name',
+                        type=str,
+                        help='Application and process name')
+        fp.add_argument('--env',
+                        type=str,
+                        choices=['dev', 'pre-prod', 'prod'],
+                        help='Application env')
+        # Setting a value flag which is not in the choices list should raise a system error
+        # Help will be shown in cmd to see how to use the flag.
+        with self.assertRaises(SystemExit):
+            self.v.bind_flags(
+                fp,
+                ["test.py", "--app-name=cmd-app", "--env=not-in-the-list"])
+
+    def test_flags_override(self):
+        # Yaml config
+        self.v.set_config_type('yaml')
+        r = yaml.dump('yaml_param: from_yaml')
+        self.v._unmarshall_reader(r, self.v._config)
+
+        # Overrides
+        self.v.set('overrides_param', 'from_overrides')
+        self.assertEqual('from_overrides', self.v.get('overrides_param'))
+
+        # Default
+        self.v.set_default('default_param', 'from_default')
+        self.assertEqual('from_default', self.v.get('default_param'))
+
+        fp = vyper.FlagsProvider()
+        fp.add_argument('--yaml-param', type=str)
+        fp.add_argument('--overrides-param', type=str)
+        fp.add_argument('--default-param', type=str)
+
+        self.v.bind_flags(fp, ["test.py",
+                               "--yaml-param=from_flags",
+                               "--default-param=from_flags"])
+
+        self.assertEqual('from_flags', self.v.get('yaml_param'))
+        self.assertEqual('from_overrides', self.v.get('overrides_param'))
+        self.assertEqual('from_flags', self.v.get('default_param'))
+
     def test_default_post(self):
         self.assertNotEqual('NYC', self.v.get('state'))
         self.v.set_default('state', 'NYC')

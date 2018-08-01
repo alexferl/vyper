@@ -1,12 +1,18 @@
 from setuptools import setup
 
+# Original repository: http://github.com/admiralobvious/vyper implemented by Alexandre Ferland
+# Changed the author_email and url to make it point to the forked repo.
+# I kept the original author_email and url as original_url and original_author_email
+
 setup(
     name='vyper',
     version='0.1.0',
     description='Python configuration with more fangs',
-    url='http://github.com/admiralobvious/vyper',
+    original_url='http://github.com/admiralobvious/vyper',
+    url='http://github.com/benjaminch/vyper',
     author='Alexandre Ferland',
-    author_email='aferlandqc@gmail.com',
+    original_author_email='aferlandqc@gmail.com',
+    author_email='benjamin.chastanier@gmail.com',
     license='MIT',
     packages=['vyper'],
     zip_safe=False,
