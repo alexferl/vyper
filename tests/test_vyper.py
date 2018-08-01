@@ -207,14 +207,18 @@ class TestVyper(unittest.TestCase):
 
         self.v.bind_env('id')
         self.v.bind_env('f', 'FOOD')
+        self.v.bind_env('batters.batter', 'BATTER_LIST')
 
         os.environ['ID'] = '13'
         os.environ['FOOD'] = 'apple'
         os.environ['NAME'] = 'crunk'
+        os.environ['BATTER_LIST'] = 'Regular,Chocolate'
 
         self.assertEqual('13', self.v.get('id'))
         self.assertEqual('apple', self.v.get('f'))
         self.assertEqual('Cake', self.v.get('name'))
+        self.assertEqual('Regular,Chocolate', self.v.get('batters.batter'))
+        self.assertEqual('Regular,Chocolate', self.v.get('batters')['batter'])
 
         self.v.automatic_env()
 
