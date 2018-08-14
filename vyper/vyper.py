@@ -3,7 +3,7 @@ import os
 import pprint
 from builtins import str as text
 
-from . import constants, errors, remote, util, watch
+from . import constants, errors, flags, remote, util, watch
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('vyper')
@@ -15,11 +15,12 @@ class Vyper(object):
     them according to the source's priority.
     The priority of the sources is the following:
         1. overrides
-        2. args
-        3. env. variables
-        4. config file
-        5. key/value store
-        6. defaults
+        2. flags
+        3. args
+        4. env. variables
+        5. config file
+        6. key/value store
+        7. defaults
 
     For example, if values from the following sources were loaded:
 
@@ -71,6 +72,7 @@ class Vyper(object):
         self._defaults = {}
         self._kvstore = {}
         self._args = {}
+        self._flags = {}
         self._env = {}
         self._aliases = {}
 
@@ -172,6 +174,16 @@ class Vyper(object):
                 return self._search_dict(d[key], keys[1::])
             else:
                 return None
+
+    def bind_flags(self, flag_provider, args=None):
+        """ Bind flags using FlagsProvider """
+        args = args or []
+        if flag_provider is not None:
+            flags = flag_provider.get_flags(args)
+            for f in flags:
+                k = self._real_key(f.lower())
+                self._flags.update({k: flags.get(f)})
+
 
     def get(self, key):
         """Vyper is essentially repository for configurations.
@@ -288,7 +300,7 @@ class Vyper(object):
     def _find(self, key):
         """Given a key, find the value
         Vyper will check in the following order:
-        override, arg, env, config file, key/value store, default
+        override, flags, arg, env, config file, key/value store, default
         Vyper will check to see if an alias exists first.
         """
         key = self._real_key(key)
@@ -301,6 +313,11 @@ class Vyper(object):
         val = self._override.get(key)
         if val is not None:
             log.debug('{0} found in override: {1}'.format(key, val))
+            return val
+
+        val = self._flags.get(key)
+        if val is not None:
+            log.debug('{0} found in flags: {1}'.format(key, val))
             return val
 
         if self._automatic_env_applied:
@@ -406,6 +423,10 @@ class Vyper(object):
                 # if we alias something that exists in one of the dicts to
                 # another name, we'll never be able to get that value using the
                 # original name, so move the config value to the new _real_key.
+                val = self._flags.get('alias')
+                if val:
+                    self._flags.pop(alias)
+                    self._flags[key] = val
                 val = self._config.get('alias')
                 if val:
                     self._config.pop(alias)
@@ -567,6 +588,9 @@ class Vyper(object):
         for k in self._override.keys():
             d[k.upper() if uppercase_keys else k.lower()] = {}
 
+        for k in self._flags.keys():
+            d[k.upper() if uppercase_keys else k.lower()] = {}
+
         for k in self._aliases.keys():
             d[k.upper() if uppercase_keys else k.lower()] = {}
 
@@ -648,6 +672,8 @@ class Vyper(object):
         pprint.pprint(self._aliases)
         print('Override:')
         pprint.pprint(self._override)
+        print('Flags:')
+        pprint.pprint(self._flags)
         print('Args:')
         pprint.pprint(self._args)
         print('Env:')

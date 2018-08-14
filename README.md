@@ -214,7 +214,31 @@ id = v.get('id')  # 13
 
 ### Working with arguments
 
-TODO
+Vyper has the ability to bind to flags. Specifically, Viper supports
+`argparse` via the internal proxy `FlagsProvider`.
+`FlagsProvider.add_argument()` is calling `argparse.ArgumentParser.add_argument()`
+under the hood, so it will forward every params as is.
+See [doc](docs.python.org/3.6/library/argparse.html#argparse.ArgumentParser)
+for more details.
+
+The value is  set when the binding method is called.
+
+As it deals with cmd args params, the `bind_flags` needs to be called passing
+cmd args `sys.argv` but `default` which has to be set using vyper's default mechanism.
+
+Note: In case a default is set here, it will be considered as a value
+
+```python
+fp = vyper.FlagsProvider()
+fp.add_argument('--app-name', type=str, help='Application and process name')
+fp.add_argument('--env', type=str, choices=['dev', 'pre-prod', 'prod'], help='Application env')
+
+# sys.argv = ["test.py", "--app-name=cmd-app", "--env=prod"]
+self.v.bind_flags(fp, sys.argv)
+
+app_name = v.get('app_name')  # 'cmd-app'
+env = v.get('env')            # 'prod'
+```
 
 ### Remote Key/Value Store Support
 
