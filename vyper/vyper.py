@@ -275,6 +275,14 @@ class Vyper(object):
 
         self._env[key] = env_key
 
+        if self._key_delimiter in key:
+            parts = key.split(self._key_delimiter)
+            self._env[parts[0]] = {
+                'path': parts[1:-1],
+                'final_key': parts[-1],
+                'env_key': env_key
+            }
+
         return None
 
     def _find(self, key):
@@ -304,7 +312,24 @@ class Vyper(object):
                 return val
 
         env_key = self._env.get(key)
-        if env_key is not None:
+        if isinstance(env_key, dict):
+            log.debug('{0} registered as env var parent {1}:'.format(key, env_key['env_key']))
+            val = self._get_env(env_key['env_key'])
+            
+            if val is not None:
+                log.debug('{0} found in environment: {1}'.format(env_key['env_key'], val))
+                parent = self._config.get(key)
+                temp = parent
+                for path in env_key['path']:
+                    temp = temp[path]
+                temp[env_key['final_key']] = val
+                return parent
+            
+            else:
+                log.debug('{0} env value unset'.format(env_key['env_key']))
+
+
+        elif env_key is not None:            
             log.debug('{0} registered as env var: {1}'.format(key, env_key))
             val = self._get_env(env_key)
             if val is not None:

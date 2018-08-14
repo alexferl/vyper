@@ -56,6 +56,14 @@ json_example = {
             {"type": "Blueberry"},
             {"type": "Devil's Food"}
         ]
+    },
+    "icings": {
+        "regular": {
+            "types": ["plain", "glazed"]
+        },
+        "premium": {
+            "types": ["passionfruit", "chocolate"]
+        }
     }
 }
 
@@ -207,14 +215,20 @@ class TestVyper(unittest.TestCase):
 
         self.v.bind_env('id')
         self.v.bind_env('f', 'FOOD')
+        self.v.bind_env('icings.premium.types', 'PREMIUM_ICINGS')
 
         os.environ['ID'] = '13'
         os.environ['FOOD'] = 'apple'
         os.environ['NAME'] = 'crunk'
+        os.environ['PREMIUM_ICINGS'] = 'Regular,Chocolate'
 
         self.assertEqual('13', self.v.get('id'))
         self.assertEqual('apple', self.v.get('f'))
         self.assertEqual('Cake', self.v.get('name'))
+        
+        self.assertEqual('Regular,Chocolate', self.v.get('icings.premium.types'))
+        self.assertEqual('Regular,Chocolate', self.v.get('icings')['premium']['types'])
+        self.assertEqual('Regular,Chocolate', self.v.get('icings.premium')['types'])
 
         self.v.automatic_env()
 
