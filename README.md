@@ -2,6 +2,9 @@
 
 Python configuration with (more) fangs! Python port of the very awesome [Viper](https://github.com/spf13/viper) for Go.
 
+## PyPI name change
+The package is changing name on pypi from `vyper` to `vyper-config` on August 20th 2018.
+
 ## What is Vyper?
 
 Vyper is a complete configuration solution for Python applications including 12 factor apps. It is designed
