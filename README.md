@@ -3,7 +3,7 @@
 Python configuration with (more) fangs! Python port of the very awesome [Viper](https://github.com/spf13/viper) for Go.
 
 ## PyPI name change
-The package is changing name on pypi from `vyper` to `vyper-config` on August 20th 2018.
+The package is changing name on pypi from `vyper` to `vyper-config` on August 20th 2018. The `vyper` name will be used by the following [project](https://github.com/ethereum/vyper). The `vyper-config` package is already available on [PyPI](https://pypi.org/project/vyper-config/).
 
 ## What is Vyper?
 
