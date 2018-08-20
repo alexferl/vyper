@@ -5,7 +5,6 @@ from builtins import str as text
 
 from . import constants, errors, flags, remote, util, watch
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('vyper')
 
 
