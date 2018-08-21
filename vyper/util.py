@@ -28,22 +28,6 @@ class ConfigParserError(Exception):
         return 'While parsing config: {0}'.format(self.message)
 
 
-def insensitivize_dict(d):
-    _d = d.copy()
-    for k, v in _d.items():
-        if isinstance(v, dict):
-            insensitivize_dict(v)
-        elif isinstance(v, list):
-            for i in v:
-                if isinstance(i, dict):
-                    insensitivize_dict(i)
-
-        lower = k.lower()
-        if k != lower:
-            del d[k]
-            d[lower] = v
-
-
 def abs_pathify(in_path):
     log.info('Trying to resolve absolute path to {0}'.format(in_path))
 
