@@ -331,11 +331,11 @@ class TestVyper(unittest.TestCase):
         self._init_json(fixture=json_camel_case_example)
         self.assertEqual('0001', self.v.get('Id'))
         self.assertEqual({
-            'batter': [
-                {'type': 'Regular'},
-                {'type': 'Chocolate'},
-                {'type': 'Blueberry'},
-                {'type': 'Devil\'s Food'},
+            'Batter': [
+                {'Type': 'Regular'},
+                {'Type': 'Chocolate'},
+                {'Type': 'Blueberry'},
+                {'Type': 'Devil\'s Food'},
             ],
         }, self.v.get('batters'))
         self.assertEqual([

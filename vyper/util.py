@@ -92,4 +92,4 @@ def unmarshall_config_reader(file_, d, config_type):
         except Exception as e:
             raise ConfigParserError(e)
 
-    return insensitivize_dict(d)
+    return d
