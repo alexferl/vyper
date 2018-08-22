@@ -287,12 +287,16 @@ class Vyper(object):
         self._env[key] = env_key
 
         if self._key_delimiter in key:
-            parts = key.split(self._key_delimiter)
-            self._env[parts[0]] = {
+            parts = input_[0].split(self._key_delimiter)
+            env_info = {
                 'path': parts[1:-1],
                 'final_key': parts[-1],
                 'env_key': env_key
             }
+            if self._env.get(parts[0]) is None:
+                self._env[parts[0]] = [env_info]
+            else:
+                self._env[parts[0]].append(env_info)
 
         return None
 
@@ -328,22 +332,28 @@ class Vyper(object):
                 return val
 
         env_key = self._env.get(key)
-        if isinstance(env_key, dict):
-            log.debug('{0} registered as env var parent {1}:'.format(key, env_key['env_key']))
-            val = self._get_env(env_key['env_key'])
-            
-            if val is not None:
-                log.debug('{0} found in environment: {1}'.format(env_key['env_key'], val))
-                parent = self._config.get(key)
-                temp = parent
-                for path in env_key['path']:
-                    temp = temp[path]
-                temp[env_key['final_key']] = val
-                return parent
-            
-            else:
-                log.debug('{0} env value unset'.format(env_key['env_key']))
 
+        if isinstance(env_key, list):
+            parent = next((self._config[real_key] for real_key in self._config.keys() if real_key.lower() == key), None)
+            found_in_env = False
+            for item in env_key:
+                print(item)
+                print(parent)
+                log.debug('{0} registered as env var parent {1}:'.format(key, item['env_key']))
+                val = self._get_env(item['env_key'])
+                
+                if val is not None:
+                    log.debug('{0} found in environment: {1}'.format(item['env_key'], val))
+                    temp = parent
+                    for path in item['path']:
+                        temp = temp[path]
+                    temp[item['final_key']] = val
+                    found_in_env = True
+                else:
+                    log.debug('{0} env value unset'.format(item['env_key']))
+            
+            if found_in_env:
+                return parent
 
         elif env_key is not None:            
             log.debug('{0} registered as env var: {1}'.format(key, env_key))
