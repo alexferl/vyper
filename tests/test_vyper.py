@@ -84,6 +84,14 @@ json_camel_case_example = {
         '0.42',
         '0.82',
     ],
+    "Icings": {
+        "Regular": {
+            "Types": ["plain", "glazed"]
+        },
+        "Premium": {
+            "Types": ["passionfruit", "chocolate"]
+        }
+    }
 }
 
 
@@ -457,6 +465,25 @@ class TestVyper(unittest.TestCase):
 
         self.v.bind_arg('eYEs', vars(args[0])['eyeballs'])
         self.assertEqual('green', self.v.get('eyes'))
+
+
+    def test_complex_bound_case_sensitivity(self):
+        self._init_json(fixture=json_camel_case_example)
+        self.assertEqual(['plain', 'glazed'], self.v.get('Icings.Regular.Types'))
+
+        self.v.bind_env('IcIngs.ReGular.TyPes', 'REGULAR_ICING')
+        self.v.bind_env('IcIngs.Premium', 'PREMIUM_ICING')
+        os.environ['REGULAR_ICING'] = 'chocolate'
+        os.environ['PREMIUM_ICING'] = 'Sold Out'
+
+        self.assertEqual('chocolate', self.v.get('Icings.Regular.Types'))
+        self.assertEqual('Sold Out', self.v.get('Icings.Premium'))
+        self.assertEqual('chocolate', self.v.get('Icings.Regular')['Types'])
+        
+        icings = self.v.get('icings')
+        self.assertEqual('Sold Out', icings['Premium'])
+        self.assertEqual({'Types': 'chocolate'}, icings['Regular'])
+
 
     def test_sub(self):
         self.v.set_config_type('yaml')
