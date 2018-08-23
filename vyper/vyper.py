@@ -348,7 +348,7 @@ class Vyper(object):
                 return val
 
         env_key = self._find_insensitive(key, self._env)
-        log.debug(f'Looking for {key} in env')
+        log.debug('Looking for {0} in env'.format(key)))
         log.debug(self._env)
         if isinstance(env_key, list):
             parent = self._find_insensitive(key, self._config)
@@ -358,7 +358,6 @@ class Vyper(object):
             for item in env_key:
                 log.debug('{0} registered as env var parent {1}:'.format(key, item['env_key']))
                 val = self._get_env(item['env_key'])
-                
                 
                 if val is not None:
                     log.debug('{0} found in environment: {1}'.format(item['env_key'], val))
