@@ -364,7 +364,7 @@ class Vyper(object):
             else:
                 log.debug('{0} env value unset'.format(env_key))
 
-        val = self._config.get(key)
+        val = next((self._config[real_key] for real_key in self._config.keys() if real_key.lower() == key), None)
         if val is not None:
             log.debug('{0} found in config: {1}'.format(key, val))
             return val
