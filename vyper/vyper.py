@@ -353,7 +353,7 @@ class Vyper(object):
         if isinstance(env_key, list):
             parent = self._find_insensitive(key, self._config)
             found_in_env = False
-            log.debug(f'Found env key parent {key}: {parent}')
+            log.debug('Found env key parent {0}: {1}'.format(key, parent))
 
             for item in env_key:
                 log.debug('{0} registered as env var parent {1}:'.format(key, item['env_key']))
