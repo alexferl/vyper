@@ -7,7 +7,6 @@ from . import constants, errors, flags, remote, util, watch
 
 log = logging.getLogger('vyper')
 
-
 class Vyper(object):
     """Vyper is a prioritized configuration registry. It maintains a set of
     configuration sources, fetches values to populate those, and provides
@@ -287,14 +286,35 @@ class Vyper(object):
         self._env[key] = env_key
 
         if self._key_delimiter in key:
-            parts = key.split(self._key_delimiter)
-            self._env[parts[0]] = {
+            parts = input_[0].split(self._key_delimiter)
+            env_info = {
                 'path': parts[1:-1],
                 'final_key': parts[-1],
                 'env_key': env_key
             }
+            
+            if self._env.get(parts[0]) is None:
+                self._env[parts[0]] = [env_info]
+            else:
+                self._env[parts[0]].append(env_info)
 
         return None
+
+    def _find_real_key(self, key, source):
+        return next(
+            (real_key for real_key in source.keys() if real_key.lower() == key.lower()), 
+            None)
+
+    def _find_insensitive(self, key, source):
+        real_key = self._find_real_key(key, source)
+        return source.get(real_key)
+
+    def _set_insensitive(self, key, val, source):
+        real_key = self._find_real_key(key, source)
+        if real_key is None:
+            raise KeyError('No case insensitive variant of {0} found.'.format(key))
+
+        source[real_key] = val
 
     def _find(self, key):
         """Given a key, find the value
@@ -327,23 +347,32 @@ class Vyper(object):
                 log.debug('{0} found in environment: {1}'.format(key, val))
                 return val
 
-        env_key = self._env.get(key)
-        if isinstance(env_key, dict):
-            log.debug('{0} registered as env var parent {1}:'.format(key, env_key['env_key']))
-            val = self._get_env(env_key['env_key'])
-            
-            if val is not None:
-                log.debug('{0} found in environment: {1}'.format(env_key['env_key'], val))
-                parent = self._config.get(key)
-                temp = parent
-                for path in env_key['path']:
-                    temp = temp[path]
-                temp[env_key['final_key']] = val
-                return parent
-            
-            else:
-                log.debug('{0} env value unset'.format(env_key['env_key']))
+        env_key = self._find_insensitive(key, self._env)
+        log.debug('Looking for {0} in env'.format(key))
+        log.debug(self._env)
+        if isinstance(env_key, list):
+            parent = self._find_insensitive(key, self._config)
+            found_in_env = False
+            log.debug('Found env key parent {0}: {1}'.format(key, parent))
 
+            for item in env_key:
+                log.debug('{0} registered as env var parent {1}:'.format(key, item['env_key']))
+                val = self._get_env(item['env_key'])
+                
+                if val is not None:
+                    log.debug('{0} found in environment: {1}'.format(item['env_key'], val))
+                    temp = parent
+                    for path in item['path']:
+                        real_key = self._find_real_key(path, temp)
+                        temp = temp[real_key]
+                    
+                    real_key = self._set_insensitive(item['final_key'], val, temp)
+                    found_in_env = True
+                else:
+                    log.debug('{0} env value unset'.format(item['env_key']))
+            
+            if found_in_env:
+                return parent
 
         elif env_key is not None:            
             log.debug('{0} registered as env var: {1}'.format(key, env_key))
@@ -354,7 +383,7 @@ class Vyper(object):
             else:
                 log.debug('{0} env value unset'.format(env_key))
 
-        val = next((self._config[real_key] for real_key in self._config.keys() if real_key.lower() == key), None)
+        val = self._find_insensitive(key, self._config)
         if val is not None:
             log.debug('{0} found in config: {1}'.format(key, val))
             return val
