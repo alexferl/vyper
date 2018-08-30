@@ -175,6 +175,14 @@ class TestVyper(unittest.TestCase):
         self.v.set_default('state', 'NYC')
         self.assertEqual('NYC', self.v.get('state'))
 
+    def test_nested_default_post(self):
+        self._init_yaml()
+        self.assertTrue(self.v.is_set('clothing'))
+        self.assertFalse(self.v.is_set('clothing.gloves'))
+        self.assertNotEqual('leather', self.v.get('clothing.gloves'))
+        self.v.set_default('clothing.gloves', 'leather')
+        self.assertEqual('leather', self.v.get('clothing.gloves'))
+
     def test_aliases(self):
         self.v.register_alias('years', 'age')
         self.v.set('years', 45)
