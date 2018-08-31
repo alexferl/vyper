@@ -395,8 +395,9 @@ class Vyper(object):
             source = self._find(path[0])
             if source is not None and isinstance(source, dict):
                 val = self._search_dict(source, path[1::])
-                log.debug('{0} found in nested config: {1}'.format(key, val))
-                return val
+                if val is not None:
+                    log.debug('{0} found in nested config: {1}'.format(key, val))
+                    return val
 
         val = self._kvstore.get(key)
         if val is not None:
