@@ -9,4 +9,4 @@ python:
   - "3.7"
 cache: pip
 install: pip install -r dev_requirements.txt
-script: nose2
+script: python setup.py test
