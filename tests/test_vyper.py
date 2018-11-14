@@ -128,7 +128,7 @@ class TestVyper(unittest.TestCase):
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_dirs(self):
-        test_dirs = ['a a', 'b', 'c\\\\c', 'D_']
+        test_dirs = ['a a', 'b', 'D_']
         config = 'improbable'
 
         root = tempfile.mkdtemp()
