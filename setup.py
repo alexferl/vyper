@@ -11,15 +11,15 @@ setup(
     packages=['vyper'],
     zip_safe=False,
     install_requires=[
-        'distconfig==0.1.0',
-        'future==0.17.1',
-        'pathlib==1.0.1',
-        'pytoml==0.1.20',
-        'PyYAML==3.13',
-        'watchdog==0.9.0'
+        'distconfig>=0.1.0',
+        'future>=0.17.1',
+        'pathlib>=1.0.1',
+        'pytoml>=0.1.20',
+        'PyYAML>=3.13',
+        'watchdog>=0.9.0'
     ],
-    setup_requires=["pytest-runner==4.2"],
-    tests_require=["pytest==3.10.1"],
+    setup_requires=["pytest-runner>=4.2"],
+    tests_require=["pytest>=3.10.1"],
     platforms='any',
     classifiers=[
         'Intended Audience :: Developers',
