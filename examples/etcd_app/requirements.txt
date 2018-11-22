@@ -1,2 +1,2 @@
-python-etcd>=0.4
-vyper
+python-etcd==0.4.5
+vyper-config

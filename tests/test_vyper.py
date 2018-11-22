@@ -15,15 +15,15 @@ try:
 except NameError:
     FileNotFoundError = OSError
 
-yaml_doublication_in_nesting = '''
+yaml_duplicate_in_nested = """
 sweet:
   home:
     alabama: yeap
   job:
     alabama: noway
-'''
+"""
 
-yaml_example = '''Hacker: true
+yaml_example = """Hacker: true
 name: steve
 hobbies:
 - skateboarding
@@ -36,13 +36,13 @@ clothing:
     size: large
 age: 35
 eyes : brown
-beard: true'''
+beard: true"""
 
-toml_example = '''title = "TOML Example"
+toml_example = """title = "TOML Example"
 [owner]
 organization = "MongoDB"
 Bio = "MongoDB Chief Developer Advocate & Hacker at Large"
-dob = 1979-05-27T07:32:00Z # First class dates? Why not?'''
+dob = 1979-05-27T07:32:00Z # First class dates? Why not?"""
 
 json_example = {
     "id": "0001",
@@ -81,8 +81,8 @@ json_camel_case_example = {
         ],
     },
     "Prices": [
-        '0.42',
-        '0.82',
+        "0.42",
+        "0.82",
     ],
     "Icings": {
         "Regular": {
@@ -100,36 +100,36 @@ class TestVyper(unittest.TestCase):
         self.v = vyper.Vyper()
 
     def _init_configs(self):
-        self.v.set_config_type('yaml')
+        self.v.set_config_type("yaml")
         r = yaml.dump(text(yaml_example))
         self.v._unmarshall_reader(r, self.v._config)
 
-        self.v.set_config_type('json')
+        self.v.set_config_type("json")
         r = json.dumps(json_example)
         self.v._unmarshall_reader(r, self.v._config)
 
-        self.v.set_config_type('toml')
+        self.v.set_config_type("toml")
         r = toml.loads(toml_example)
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_yaml(self):
-        self.v.set_config_type('yaml')
+        self.v.set_config_type("yaml")
         r = yaml.dump(yaml_example)
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_json(self, fixture=None):
-        self.v.set_config_type('json')
+        self.v.set_config_type("json")
         r = json.dumps(fixture or json_example)
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_toml(self):
-        self.v.set_config_type('toml')
+        self.v.set_config_type("toml")
         r = toml.loads(toml_example)
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_dirs(self):
-        test_dirs = ['a a', 'b', 'D_']
-        config = 'improbable'
+        test_dirs = ["a a", "b", "D_"]
+        config = "improbable"
 
         root = tempfile.mkdtemp()
 
@@ -144,82 +144,82 @@ class TestVyper(unittest.TestCase):
         for dir_ in test_dirs:
             os.mkdir(dir_, 0o0750)
 
-            f = '{0}.toml'.format(config)
+            f = "{0}.toml".format(config)
             flags = os.O_WRONLY | os.O_CREAT
-            rel_path = '{0}/{1}'.format(dir_, f)
+            rel_path = "{0}/{1}".format(dir_, f)
             abs_file_path = os.path.join(root, rel_path)
-            with os.fdopen(os.open(abs_file_path, flags, 0o0640), 'w') as fp:
+            with os.fdopen(os.open(abs_file_path, flags, 0o0640), "w") as fp:
                 fp.write("key = \"value is {0}\"\n".format(dir_))
 
         return root, config, cleanup
 
     def test_basics(self):
-        self.v.set_config_file('/tmp/config.yaml')
-        self.assertEqual('/tmp/config.yaml', self.v._get_config_file())
+        self.v.set_config_file("/tmp/config.yaml")
+        self.assertEqual("/tmp/config.yaml", self.v._get_config_file())
 
     def test_default(self):
-        self.v.set_default('age', 45)
-        self.assertEqual(45, self.v.get('age'))
+        self.v.set_default("age", 45)
+        self.assertEqual(45, self.v.get("age"))
 
-        self.v.set_default('clothing.jacket', 'slacks')
-        self.assertEqual('slacks', self.v.get('clothing.jacket'))
+        self.v.set_default("clothing.jacket", "slacks")
+        self.assertEqual("slacks", self.v.get("clothing.jacket"))
 
     def test_unmarshalling(self):
         # TODO: not complete
-        self.v.set_config_type('yaml')
+        self.v.set_config_type("yaml")
         r = yaml.dump(yaml_example)
         self.v._unmarshall_reader(r, self.v._config)
-        self.assertTrue(self.v.in_config('name'))
-        self.assertFalse(self.v.in_config('state'))
-        self.assertEqual('steve', self.v.get('name'))
-        self.assertEqual(35, self.v.get('age'))
+        self.assertTrue(self.v.in_config("name"))
+        self.assertFalse(self.v.in_config("state"))
+        self.assertEqual("steve", self.v.get("name"))
+        self.assertEqual(35, self.v.get("age"))
 
     def test_yaml_duplication_nested(self):
 
-        self.v.set_config_type('yaml')
-        r = yaml.dump(yaml_doublication_in_nesting)
+        self.v.set_config_type("yaml")
+        r = yaml.dump(yaml_duplicate_in_nested)
         self.v._unmarshall_reader(r, self.v._config)
-        self.assertEqual('yeap', self.v.get('sweet.home.alabama'))
-        self.assertEqual('noway', self.v.get('sweet.job.alabama'))
+        self.assertEqual("yeap", self.v.get("sweet.home.alabama"))
+        self.assertEqual("noway", self.v.get("sweet.job.alabama"))
 
     def test_override(self):
-        self.v.set('age', 40)
-        self.assertEqual(40, self.v.get('age'))
+        self.v.set("age", 40)
+        self.assertEqual(40, self.v.get("age"))
 
     def test_default_flags(self):
         # Making sure that default param is not taken into account when settings flags
         fp = vyper.FlagsProvider()
         fp.add_argument(
-            '--app-name',
+            "--app-name",
             type=str,
-            default='app',
-            help='Application and process name')
+            default="app",
+            help="Application and process name")
         self.v.bind_flags(fp, ["test.py"])
-        self.assertEqual(None, self.v.get('app_name'))
+        self.assertEqual(None, self.v.get("app_name"))
 
     def test_flags_with_value(self):
         fp = vyper.FlagsProvider()
         fp.add_argument(
-            '--app-name',
+            "--app-name",
             type=str,
-            help='Application and process name')
-        fp.add_argument('--env',
+            help="Application and process name")
+        fp.add_argument("--env",
                         type=str,
-                        choices=['dev', 'pre-prod', 'prod'],
-                        help='Application env (default %(default)s)')
+                        choices=["dev", "pre-prod", "prod"],
+                        help="Application env (default %(default)s)")
         self.v.bind_flags(fp, ["test.py", "--app-name=cmd-app", "--env=prod"])
-        self.assertEqual('cmd-app', self.v.get('app_name'))
-        self.assertEqual('prod', self.v.get('env'))
+        self.assertEqual("cmd-app", self.v.get("app_name"))
+        self.assertEqual("prod", self.v.get("env"))
 
     def test_flags_with_bad_value(self):
         fp = vyper.FlagsProvider()
-        fp.add_argument('--app-name',
+        fp.add_argument("--app-name",
                         type=str,
-                        help='Application and process name')
-        fp.add_argument('--env',
+                        help="Application and process name")
+        fp.add_argument("--env",
                         type=str,
-                        choices=['dev', 'pre-prod', 'prod'],
-                        help='Application env')
+                        choices=["dev", "pre-prod", "prod"],
+                        help="Application env")
         # Setting a value flag which is not in the choices list should raise a system error
         # Help will be shown in cmd to see how to use the flag.
         with self.assertRaises(SystemExit):
@@ -229,172 +229,172 @@ class TestVyper(unittest.TestCase):
 
     def test_flags_override(self):
         # Yaml config
-        self.v.set_config_type('yaml')
-        r = yaml.dump('yaml_param: from_yaml')
+        self.v.set_config_type("yaml")
+        r = yaml.dump("yaml_param: from_yaml")
         self.v._unmarshall_reader(r, self.v._config)
 
         # Overrides
-        self.v.set('overrides_param', 'from_overrides')
-        self.assertEqual('from_overrides', self.v.get('overrides_param'))
+        self.v.set("overrides_param", "from_overrides")
+        self.assertEqual("from_overrides", self.v.get("overrides_param"))
 
         # Default
-        self.v.set_default('default_param', 'from_default')
-        self.assertEqual('from_default', self.v.get('default_param'))
+        self.v.set_default("default_param", "from_default")
+        self.assertEqual("from_default", self.v.get("default_param"))
 
         fp = vyper.FlagsProvider()
-        fp.add_argument('--yaml-param', type=str)
-        fp.add_argument('--overrides-param', type=str)
-        fp.add_argument('--default-param', type=str)
+        fp.add_argument("--yaml-param", type=str)
+        fp.add_argument("--overrides-param", type=str)
+        fp.add_argument("--default-param", type=str)
 
         self.v.bind_flags(fp, ["test.py",
                                "--yaml-param=from_flags",
                                "--default-param=from_flags"])
 
-        self.assertEqual('from_flags', self.v.get('yaml_param'))
-        self.assertEqual('from_overrides', self.v.get('overrides_param'))
-        self.assertEqual('from_flags', self.v.get('default_param'))
+        self.assertEqual("from_flags", self.v.get("yaml_param"))
+        self.assertEqual("from_overrides", self.v.get("overrides_param"))
+        self.assertEqual("from_flags", self.v.get("default_param"))
 
     def test_default_post(self):
-        self.assertNotEqual('NYC', self.v.get('state'))
-        self.v.set_default('state', 'NYC')
-        self.assertEqual('NYC', self.v.get('state'))
+        self.assertNotEqual("NYC", self.v.get("state"))
+        self.v.set_default("state", "NYC")
+        self.assertEqual("NYC", self.v.get("state"))
 
     def test_nested_default_post(self):
         self._init_yaml()
-        self.assertTrue(self.v.is_set('clothing'))
-        self.assertFalse(self.v.is_set('clothing.gloves'))
-        self.assertNotEqual('leather', self.v.get('clothing.gloves'))
-        self.v.set_default('clothing.gloves', 'leather')
-        self.assertEqual('leather', self.v.get('clothing.gloves'))
+        self.assertTrue(self.v.is_set("clothing"))
+        self.assertFalse(self.v.is_set("clothing.gloves"))
+        self.assertNotEqual("leather", self.v.get("clothing.gloves"))
+        self.v.set_default("clothing.gloves", "leather")
+        self.assertEqual("leather", self.v.get("clothing.gloves"))
 
     def test_aliases(self):
-        self.v.register_alias('years', 'age')
-        self.v.set('years', 45)
-        self.assertEqual(45, self.v.get('age'))
+        self.v.register_alias("years", "age")
+        self.v.set("years", 45)
+        self.assertEqual(45, self.v.get("age"))
 
     # def test_alias_in_config_file(self):
     #    # the config file specifies "beard". If we make this an alias for
     #    # "hasbeard", we still want the old config file to work with beard.
     #    self._init_yaml()
-    #    self.v.register_alias('beard', 'hasbeard')
+    #    self.v.register_alias("beard", "hasbeard")
     #    # self.v.debug()
-    #    self.assertEqual(True, self.v.get('hasbeard'))
-    #    self.v.set('hasbeard', False)
-    #    self.assertEqual(False, self.v.get('beard'))
+    #    self.assertEqual(True, self.v.get("hasbeard"))
+    #    self.v.set("hasbeard", False)
+    #    self.assertEqual(False, self.v.get("beard"))
 
     def test_yaml(self):
         self._init_yaml()
-        self.assertEqual('steve', self.v.get('name'))
+        self.assertEqual("steve", self.v.get("name"))
 
     def test_json(self):
         self._init_json()
-        self.assertEqual('0001', self.v.get('id'))
+        self.assertEqual("0001", self.v.get("id"))
 
     def test_toml(self):
         self._init_toml()
-        self.assertEqual('TOML Example', self.v.get('title'))
+        self.assertEqual("TOML Example", self.v.get("title"))
 
     def test_env(self):
         self._init_json()
 
-        self.v.bind_env('id')
-        self.v.bind_env('f', 'FOOD')
-        self.v.bind_env('icings.premium.types', 'PREMIUM_ICINGS')
+        self.v.bind_env("id")
+        self.v.bind_env("f", "FOOD")
+        self.v.bind_env("icings.premium.types", "PREMIUM_ICINGS")
 
-        os.environ['ID'] = '13'
-        os.environ['FOOD'] = 'apple'
-        os.environ['NAME'] = 'crunk'
-        os.environ['PREMIUM_ICINGS'] = 'Regular,Chocolate'
+        os.environ["ID"] = "13"
+        os.environ["FOOD"] = "apple"
+        os.environ["NAME"] = "crunk"
+        os.environ["PREMIUM_ICINGS"] = "Regular,Chocolate"
 
-        self.assertEqual('13', self.v.get('id'))
-        self.assertEqual('apple', self.v.get('f'))
-        self.assertEqual('Cake', self.v.get('name'))
-        
-        self.assertEqual('Regular,Chocolate', self.v.get('icings.premium.types'))
-        self.assertEqual('Regular,Chocolate', self.v.get('icings')['premium']['types'])
-        self.assertEqual('Regular,Chocolate', self.v.get('icings.premium')['types'])
+        self.assertEqual("13", self.v.get("id"))
+        self.assertEqual("apple", self.v.get("f"))
+        self.assertEqual("Cake", self.v.get("name"))
+
+        self.assertEqual("Regular,Chocolate", self.v.get("icings.premium.types"))
+        self.assertEqual("Regular,Chocolate", self.v.get("icings")["premium"]["types"])
+        self.assertEqual("Regular,Chocolate", self.v.get("icings.premium")["types"])
 
         self.v.automatic_env()
 
-        self.assertEqual('crunk', self.v.get('name'))
+        self.assertEqual("crunk", self.v.get("name"))
 
     def test_auto_env(self):
         self.v.automatic_env()
-        os.environ['FOO_BAR'] = '13'
-        self.assertEqual('13', self.v.get('foo_bar'))
+        os.environ["FOO_BAR"] = "13"
+        self.assertEqual("13", self.v.get("foo_bar"))
 
     def test_auto_env_with_prefix(self):
         self.v.automatic_env()
-        self.v.set_env_prefix('Baz')
-        os.environ['BAZ_BAR'] = '13'
-        self.assertEqual('13', self.v.get('bar'))
+        self.v.set_env_prefix("Baz")
+        os.environ["BAZ_BAR"] = "13"
+        self.assertEqual("13", self.v.get("bar"))
 
     def test_set_env_replacer(self):
         self.v.automatic_env()
-        os.environ['REFRESH_INTERVAL'] = '30s'
+        os.environ["REFRESH_INTERVAL"] = "30s"
 
-        self.v.set_env_key_replacer('-', '_')
+        self.v.set_env_key_replacer("-", "_")
 
-        self.assertEqual('30s', self.v.get('refresh-interval'))
+        self.assertEqual("30s", self.v.get("refresh-interval"))
 
     def test_all_keys(self):
         pass
 
     def test_case_insensitive(self):
-        self.v.set('Title', 'Checking Case')
-        self.assertEqual('Checking Case', self.v.get('tItle'))
+        self.v.set("Title", "Checking Case")
+        self.assertEqual("Checking Case", self.v.get("tItle"))
 
         self._init_json(fixture=json_camel_case_example)
-        self.assertEqual('0001', self.v.get('Id'))
+        self.assertEqual("0001", self.v.get("Id"))
         self.assertEqual({
-            'Batter': [
-                {'Type': 'Regular'},
-                {'Type': 'Chocolate'},
-                {'Type': 'Blueberry'},
-                {'Type': 'Devil\'s Food'},
+            "Batter": [
+                {"Type": "Regular"},
+                {"Type": "Chocolate"},
+                {"Type": "Blueberry"},
+                {"Type": "Devil's Food"},
             ],
-        }, self.v.get('batters'))
+        }, self.v.get("batters"))
         self.assertEqual([
-            '0.42',
-            '0.82',
-        ], self.v.get('prices'))
+            "0.42",
+            "0.82",
+        ], self.v.get("prices"))
 
     def test_aliases_of_aliases(self):
-        self.v.register_alias('Foo', 'Bar')
-        self.v.register_alias('Bar', 'Title')
-        self.v.set('Foo', 'Checking Case')
+        self.v.register_alias("Foo", "Bar")
+        self.v.register_alias("Bar", "Title")
+        self.v.set("Foo", "Checking Case")
 
-        self.assertEqual('Checking Case', self.v.get('Bar'))
+        self.assertEqual("Checking Case", self.v.get("Bar"))
 
     def test_recursive_aliases(self):
-        self.v.register_alias('Baz', 'Roo')
-        self.v.register_alias('Roo', 'baz')
+        self.v.register_alias("Baz", "Roo")
+        self.v.register_alias("Roo", "baz")
 
     def test_unmarshall(self):
-        self.v.set_default('port', 1313)
-        self.v.set('name', 'Steve')
+        self.v.set_default("port", 1313)
+        self.v.set("name", "Steve")
 
-        cls = type('MyClass', (), {})
+        cls = type("MyClass", (), {})
         c = self.v.unmarshall(cls)
 
-        self.assertEqual(c.name, self.v.get('name'))
-        self.assertEqual(c.port, self.v.get('port'))
+        self.assertEqual(c.name, self.v.get("name"))
+        self.assertEqual(c.port, self.v.get("port"))
 
-        self.v.set('port', 1234)
+        self.v.set("port", 1234)
         c = self.v.unmarshall(cls)
-        self.assertEqual(c.port, self.v.get('port'))
+        self.assertEqual(c.port, self.v.get("port"))
 
     def test_bind_args(self):
         arg_set = argparse.ArgumentParser()
 
         test_values = {
-            'host': 'localhost',
-            'port': '6060',
-            'endpoint': '/public'
+            "host": "localhost",
+            "port": "6060",
+            "endpoint": "/public"
         }
 
         for name, value in test_values.items():
-            arg_set.add_argument('--' + name, default=value)
+            arg_set.add_argument("--" + name, default=value)
 
         args = arg_set.parse_known_args()
         self.v.bind_args(vars(args[0]))
@@ -404,21 +404,21 @@ class TestVyper(unittest.TestCase):
 
     def test_bind_arg(self):
         arg_set = argparse.ArgumentParser()
-        arg_set.add_argument('--testflag', default='testing')
+        arg_set.add_argument("--testflag", default="testing")
         args = arg_set.parse_known_args()
 
-        self.v.bind_arg('testvalue', vars(args[0])['testflag'])
+        self.v.bind_arg("testvalue", vars(args[0])["testflag"])
 
-        self.assertEqual('testing', self.v.get('testvalue'))
+        self.assertEqual("testing", self.v.get("testvalue"))
 
     def test_is_set(self):
-        self.v.set_config_type('yaml')
+        self.v.set_config_type("yaml")
         self.v.read_config(yaml.dump(text(yaml_example)))
-        self.assertTrue(self.v.is_set('clothing.jacket'))
-        self.assertFalse(self.v.is_set('clothing.jackets'))
-        self.assertFalse(self.v.is_set('helloworld'))
-        self.v.set('helloworld', 'fubar')
-        self.assertTrue(self.v.is_set('helloworld'))
+        self.assertTrue(self.v.is_set("clothing.jacket"))
+        self.assertFalse(self.v.is_set("clothing.jackets"))
+        self.assertFalse(self.v.is_set("helloworld"))
+        self.v.set("helloworld", "fubar")
+        self.assertTrue(self.v.is_set("helloworld"))
 
     def test_dirs_search(self):
         root, config, cleanup = self._init_dirs()
@@ -426,8 +426,8 @@ class TestVyper(unittest.TestCase):
         try:
             v = vyper.Vyper()
             v.set_config_name(config)
-            v.set_config_type('toml')
-            v.set_default('key', 'default')
+            v.set_config_type("toml")
+            v.set_default("key", "default")
 
             entries = os.listdir(root)
             for e in entries:
@@ -436,8 +436,8 @@ class TestVyper(unittest.TestCase):
 
             v.read_in_config()
 
-            self.assertEqual('value is ' + v._config_paths[0].name,
-                             v.get_string('key'))
+            self.assertEqual("value is " + v._config_paths[0].name,
+                             v.get_string("key"))
         finally:
             cleanup()
 
@@ -447,78 +447,76 @@ class TestVyper(unittest.TestCase):
         try:
             v = vyper.Vyper()
             v.set_config_name(config)
-            v.set_default('key', 'default')
+            v.set_default("key", "default")
 
-            v.add_config_path('whattayoutalkingabout')
-            v.add_config_path('thispathainthere')
+            v.add_config_path("whattayoutalkingabout")
+            v.add_config_path("thispathainthere")
 
             self.assertRaises(errors.UnsupportedConfigError, v.read_in_config)
 
-            self.assertEqual('default', v.get_string('key'))
+            self.assertEqual("default", v.get_string("key"))
         finally:
             cleanup()
 
     def test_bound_case_sensitivity(self):
         self._init_yaml()
-        self.assertEqual('brown', self.v.get('eyes'))
+        self.assertEqual("brown", self.v.get("eyes"))
 
-        self.v.bind_env('eYEs', 'TURTLE_EYES')
-        os.environ['TURTLE_EYES'] = 'blue'
+        self.v.bind_env("eYEs", "TURTLE_EYES")
+        os.environ["TURTLE_EYES"] = "blue"
 
-        self.assertEqual('blue', self.v.get('eyes'))
+        self.assertEqual("blue", self.v.get("eyes"))
 
         arg_set = argparse.ArgumentParser()
-        arg_set.add_argument('--eyeballs', default='green')
+        arg_set.add_argument("--eyeballs", default="green")
         args = arg_set.parse_known_args()
 
-        self.v.bind_arg('eYEs', vars(args[0])['eyeballs'])
-        self.assertEqual('green', self.v.get('eyes'))
-
+        self.v.bind_arg("eYEs", vars(args[0])["eyeballs"])
+        self.assertEqual("green", self.v.get("eyes"))
 
     def test_complex_bound_case_sensitivity(self):
         self._init_json(fixture=json_camel_case_example)
-        self.assertEqual(['plain', 'glazed'], self.v.get('Icings.Regular.Types'))
+        self.assertEqual(["plain", "glazed"], self.v.get("Icings.Regular.Types"))
 
-        self.v.bind_env('IcIngs.ReGular.TyPes', 'REGULAR_ICING')
-        self.v.bind_env('IcIngs.Premium', 'PREMIUM_ICING')
-        os.environ['REGULAR_ICING'] = 'chocolate'
-        os.environ['PREMIUM_ICING'] = 'Sold Out'
+        self.v.bind_env("IcIngs.ReGular.TyPes", "REGULAR_ICING")
+        self.v.bind_env("IcIngs.Premium", "PREMIUM_ICING")
+        os.environ["REGULAR_ICING"] = "chocolate"
+        os.environ["PREMIUM_ICING"] = "Sold Out"
 
-        self.assertEqual('chocolate', self.v.get('Icings.Regular.Types'))
-        self.assertEqual('Sold Out', self.v.get('Icings.Premium'))
-        self.assertEqual('chocolate', self.v.get('Icings.Regular')['Types'])
-        
-        icings = self.v.get('icings')
-        self.assertEqual('Sold Out', icings['Premium'])
-        self.assertEqual({'Types': 'chocolate'}, icings['Regular'])
+        self.assertEqual("chocolate", self.v.get("Icings.Regular.Types"))
+        self.assertEqual("Sold Out", self.v.get("Icings.Premium"))
+        self.assertEqual("chocolate", self.v.get("Icings.Regular")["Types"])
 
+        icings = self.v.get("icings")
+        self.assertEqual("Sold Out", icings["Premium"])
+        self.assertEqual({"Types": "chocolate"}, icings["Regular"])
 
     def test_sub(self):
-        self.v.set_config_type('yaml')
+        self.v.set_config_type("yaml")
         self.v.read_config(yaml.dump(text(yaml_example)))
 
-        subv = self.v.sub('clothing')
-        self.assertEqual(self.v.get('clothing.pants.size'),
-                         subv.get('pants.size'))
+        subv = self.v.sub("clothing")
+        self.assertEqual(self.v.get("clothing.pants.size"),
+                         subv.get("pants.size"))
 
-        subv = self.v.sub('clothing.pants')
-        self.assertEqual(self.v.get('clothing.pants.size'), subv.get('size'))
+        subv = self.v.sub("clothing.pants")
+        self.assertEqual(self.v.get("clothing.pants.size"), subv.get("size"))
 
-        subv = self.v.sub('clothing.pants.size')
+        subv = self.v.sub("clothing.pants.size")
         self.assertEqual(subv, None)
 
     def test_unmarshalling_with_aliases(self):
-        self.v.set_default('Id', 1)
-        self.v.set('name', 'Steve')
-        self.v.set('lastname', 'Owen')
+        self.v.set_default("Id", 1)
+        self.v.set("name", "Steve")
+        self.v.set("lastname", "Owen")
 
-        self.v.register_alias('UserId', 'Id')
-        self.v.register_alias('Firstname', 'name')
-        self.v.register_alias('Surname', 'lastname')
+        self.v.register_alias("UserId", "Id")
+        self.v.register_alias("Firstname", "name")
+        self.v.register_alias("Surname", "lastname")
 
-        cls = type('MyClass', (), {})
+        cls = type("MyClass", (), {})
         c = self.v.unmarshall(cls)
 
         self.assertEqual(c.id, 1)
-        self.assertEqual(c.firstname, 'Steve')
-        self.assertEqual(c.surname, 'Owen')
+        self.assertEqual(c.firstname, "Steve")
+        self.assertEqual(c.surname, "Owen")

@@ -12,9 +12,9 @@ except ImportError:
 from . import constants, errors
 
 PROVIDER_TYPE = {
-    'consul': 'distconfig.backends.consul.ConsulBackend',
-    'etcd': 'distconfig.backends.etcd.EtcdBackend',
-    'zookeeper': 'distconfig.backends.zookeeper.ZooKeeperBackend'
+    "consul": "distconfig.backends.consul.ConsulBackend",
+    "etcd": "distconfig.backends.etcd.EtcdBackend",
+    "zookeeper": "distconfig.backends.zookeeper.ZooKeeperBackend"
 }
 
 
@@ -22,7 +22,7 @@ class RemoteProvider(object):
     def __init__(self, provider, client, path, v):
         self.v = v
         config_type = self.v._config_type
-        if config_type != '' and config_type in constants.SUPPORTED_EXTS:
+        if config_type != "" and config_type in constants.SUPPORTED_EXTS:
             self.config_type = config_type
         else:
             raise errors.UnsupportedConfigError(config_type)
@@ -47,11 +47,11 @@ class RemoteProvider(object):
         return self.path
 
     def _get_parser(self):
-        if self.config_type == 'json':
+        if self.config_type == "json":
             return json.loads
-        elif self.config_type in ['yaml', 'yml']:
+        elif self.config_type in ["yaml", "yml"]:
             return yaml.load
-        elif self.config_type == 'toml':
+        elif self.config_type == "toml":
             return toml.loads
 
     def get(self):
@@ -59,7 +59,7 @@ class RemoteProvider(object):
         for k, v in self.config.items():
             d[k] = v
 
-        if self.config_type != 'toml':
+        if self.config_type != "toml":
             return json.dumps(d)
         else:
             return d

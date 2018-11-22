@@ -8,8 +8,8 @@ class FlagsProvider:
 
     def add_argument(self, flag, *args, **kwargs):
         # Make sure to remove the default value if set
-        if 'default' in kwargs:
-            kwargs.pop('default', None)
+        if "default" in kwargs:
+            kwargs.pop("default", None)
         self.argument_parser.add_argument(
             flag,
             **kwargs

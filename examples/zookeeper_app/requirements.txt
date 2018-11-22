@@ -1,2 +1,2 @@
-kazoo>=2.2
-vyper
+kazoo==2.6.0
+vyper-config

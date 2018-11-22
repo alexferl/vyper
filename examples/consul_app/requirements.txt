@@ -1,2 +1,2 @@
-python-consul>=0.6
-vyper
+python-consul==1.1.0
+vyper-config
