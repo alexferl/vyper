@@ -4,7 +4,7 @@ Python configuration with (more) fangs! Python port of the very awesome [Viper](
 
 ## PyPI name change
 The package changed name on pypi from `vyper` to `vyper-config` on August 20th 2018.
-The `vyper` name will be used by the following [project](https://github.com/ethereum/vyper).
+The `vyper` name is now used by the following [project](https://github.com/ethereum/vyper).
 The `vyper-config` package is available on [PyPI](https://pypi.org/project/vyper-config/).
 
 ## What is Vyper?
