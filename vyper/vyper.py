@@ -251,7 +251,7 @@ class Vyper(object):
     def _parse_args(self, parser, args=None):
         if args:
             return vars(parser.parse_args(args))
-        return vars(parser.parse_args([]))
+        return vars(parser.parse_args())
 
     def bind_parser_values(self, parser, args=None):
         # method mostly for testing
