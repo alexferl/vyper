@@ -1,9 +1,9 @@
 import argparse
 import json
+import os
 import tempfile
 import unittest
 
-import os
 import pytoml as toml
 import vyper
 import yaml
@@ -130,7 +130,6 @@ class TestVyper(unittest.TestCase):
     def _init_dirs(self):
         test_dirs = ["a a", "b", "D_"]
         config = "improbable"
-
         root = tempfile.mkdtemp()
 
         def cleanup():
@@ -165,7 +164,6 @@ class TestVyper(unittest.TestCase):
         self.assertEqual("slacks", self.v.get("clothing.jacket"))
 
     def test_unmarshalling(self):
-        # TODO: not complete
         self.v.set_config_type("yaml")
         r = yaml.dump(yaml_example)
         self.v._unmarshall_reader(r, self.v._config)
@@ -175,7 +173,6 @@ class TestVyper(unittest.TestCase):
         self.assertEqual(35, self.v.get("age"))
 
     def test_yaml_duplication_nested(self):
-
         self.v.set_config_type("yaml")
         r = yaml.dump(yaml_duplicate_in_nested)
         self.v._unmarshall_reader(r, self.v._config)
@@ -186,48 +183,58 @@ class TestVyper(unittest.TestCase):
         self.v.set("age", 40)
         self.assertEqual(40, self.v.get("age"))
 
-    def test_default_flags(self):
-        # Making sure that default param is not taken into account when settings flags
-        fp = vyper.FlagsProvider()
-        fp.add_argument(
-            "--app-name",
-            type=str,
-            default="app",
-            help="Application and process name")
-        self.v.bind_flags(fp, ["test.py"])
-        self.assertEqual(None, self.v.get("app_name"))
+    def test_bind_args(self):
+        arg_set = argparse.ArgumentParser()
 
-    def test_flags_with_value(self):
-        fp = vyper.FlagsProvider()
-        fp.add_argument(
-            "--app-name",
-            type=str,
-            help="Application and process name")
-        fp.add_argument("--env",
-                        type=str,
+        test_values = {
+            "host": "localhost",
+            "port": "6060",
+            "endpoint": "/public"
+        }
+
+        for name, value in test_values.items():
+            arg_set.add_argument("--" + name, default=value)
+
+        self.v.bind_args(arg_set)
+
+        for name, value in test_values.items():
+            self.assertEqual(self.v.get(name), value)
+
+    def test_bind_arg(self):
+        arg_set = argparse.ArgumentParser()
+        arg_set.add_argument("--testflag", default="testing")
+        args = arg_set.parse_known_args()
+
+        self.v.bind_arg("testvalue", vars(args[0])["testflag"])
+
+        self.assertEqual("testing", self.v.get("testvalue"))
+
+    def test_args_with_value(self):
+        fp = argparse.ArgumentParser()
+        fp.add_argument("--app-name", type=str,
+                        help="Application and process name")
+        fp.add_argument("--env", type=str,
                         choices=["dev", "pre-prod", "prod"],
                         help="Application env (default %(default)s)")
-        self.v.bind_flags(fp, ["test.py", "--app-name=cmd-app", "--env=prod"])
+        self.v.bind_parser_values(fp, ["--app-name=cmd-app", "--env=prod"])
         self.assertEqual("cmd-app", self.v.get("app_name"))
         self.assertEqual("prod", self.v.get("env"))
 
-    def test_flags_with_bad_value(self):
-        fp = vyper.FlagsProvider()
-        fp.add_argument("--app-name",
-                        type=str,
-                        help="Application and process name")
-        fp.add_argument("--env",
-                        type=str,
-                        choices=["dev", "pre-prod", "prod"],
-                        help="Application env")
+    def test_args_with_bad_value(self):
+        p = argparse.ArgumentParser()
+        p.add_argument("--app-name", type=str,
+                       help="Application and process name")
+        p.add_argument("--env", type=str,
+                       choices=["dev", "pre-prod", "prod"],
+                       help="Application env")
         # Setting a value flag which is not in the choices list should raise a system error
         # Help will be shown in cmd to see how to use the flag.
         with self.assertRaises(SystemExit):
-            self.v.bind_flags(
-                fp,
-                ["test.py", "--app-name=cmd-app", "--env=not-in-the-list"])
+            self.v.bind_parser_values(
+                p,
+                ["--app-name=cmd-app", "--env=not-in-the-list"])
 
-    def test_flags_override(self):
+    def test_args_override(self):
         # Yaml config
         self.v.set_config_type("yaml")
         r = yaml.dump("yaml_param: from_yaml")
@@ -241,18 +248,21 @@ class TestVyper(unittest.TestCase):
         self.v.set_default("default_param", "from_default")
         self.assertEqual("from_default", self.v.get("default_param"))
 
-        fp = vyper.FlagsProvider()
-        fp.add_argument("--yaml-param", type=str)
-        fp.add_argument("--overrides-param", type=str)
-        fp.add_argument("--default-param", type=str)
+        p = argparse.ArgumentParser()
+        p.add_argument("--yaml-param", type=str)
+        p.add_argument("--overrides-param", type=str,
+                       default="override_arg")
+        p.add_argument("--default-param", type=str)
+        p.add_argument("--default-param-arg", type=str,
+                       default="default_from_arg")
 
-        self.v.bind_flags(fp, ["test.py",
-                               "--yaml-param=from_flags",
-                               "--default-param=from_flags"])
+        self.v.bind_parser_values(p, ["--yaml-param=from_flags",
+                                      "--default-param=from_flags"])
 
         self.assertEqual("from_flags", self.v.get("yaml_param"))
         self.assertEqual("from_overrides", self.v.get("overrides_param"))
         self.assertEqual("from_flags", self.v.get("default_param"))
+        self.assertEqual("default_from_arg", self.v.get("default_param_arg"))
 
     def test_default_post(self):
         self.assertNotEqual("NYC", self.v.get("state"))
@@ -272,15 +282,16 @@ class TestVyper(unittest.TestCase):
         self.v.set("years", 45)
         self.assertEqual(45, self.v.get("age"))
 
-    # def test_alias_in_config_file(self):
-    #    # the config file specifies "beard". If we make this an alias for
-    #    # "hasbeard", we still want the old config file to work with beard.
-    #    self._init_yaml()
-    #    self.v.register_alias("beard", "hasbeard")
-    #    # self.v.debug()
-    #    self.assertEqual(True, self.v.get("hasbeard"))
-    #    self.v.set("hasbeard", False)
-    #    self.assertEqual(False, self.v.get("beard"))
+    def test_alias_in_config_file(self):
+        # the config file specifies "beard". If we make this an alias for
+        # "hasbeard", we still want the old config file to work with beard.
+        self._init_yaml()
+        self.v.register_alias("hasbeard", "beard")
+        self.assertEqual(True, self.v.get("hasbeard"))
+        self.assertEqual(True, self.v.get("beard"))
+        self.v.set("hasbeard", False)
+        self.assertEqual(False, self.v.get("hasbeard"))
+        self.assertEqual(False, self.v.get("beard"))
 
     def test_yaml(self):
         self._init_yaml()
@@ -338,7 +349,12 @@ class TestVyper(unittest.TestCase):
         self.assertEqual("30s", self.v.get("refresh-interval"))
 
     def test_all_keys(self):
-        pass
+        self._init_json()
+        self.v.set("setkey", "setvalue")
+        self.v.set_default("defaultkey", "defaultvalue")
+        all_keys = ["batters", "name", "icings", "ppu", "type", "id",
+                    "setkey", "defaultkey"]
+        self.assertSetEqual(set(self.v.all_keys()), set(all_keys))
 
     def test_case_insensitive(self):
         self.v.set("Title", "Checking Case")
@@ -383,33 +399,6 @@ class TestVyper(unittest.TestCase):
         self.v.set("port", 1234)
         c = self.v.unmarshall(cls)
         self.assertEqual(c.port, self.v.get("port"))
-
-    def test_bind_args(self):
-        arg_set = argparse.ArgumentParser()
-
-        test_values = {
-            "host": "localhost",
-            "port": "6060",
-            "endpoint": "/public"
-        }
-
-        for name, value in test_values.items():
-            arg_set.add_argument("--" + name, default=value)
-
-        args = arg_set.parse_known_args()
-        self.v.bind_args(vars(args[0]))
-
-        for name, value in test_values.items():
-            self.assertEqual(self.v.get(name), value)
-
-    def test_bind_arg(self):
-        arg_set = argparse.ArgumentParser()
-        arg_set.add_argument("--testflag", default="testing")
-        args = arg_set.parse_known_args()
-
-        self.v.bind_arg("testvalue", vars(args[0])["testflag"])
-
-        self.assertEqual("testing", self.v.get("testvalue"))
 
     def test_is_set(self):
         self.v.set_config_type("yaml")

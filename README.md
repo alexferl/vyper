@@ -3,13 +3,14 @@
 Python configuration with (more) fangs! Python port of the very awesome [Viper](https://github.com/spf13/viper) for Go.
 
 ## PyPI name change
-The package is changing name on pypi from `vyper` to `vyper-config` on August 20th 2018. The `vyper` name will be used by the following [project](https://github.com/ethereum/vyper). The `vyper-config` package is already available on [PyPI](https://pypi.org/project/vyper-config/).
+The package changed name on pypi from `vyper` to `vyper-config` on August 20th 2018.
+The `vyper` name will be used by the following [project](https://github.com/ethereum/vyper).
+The `vyper-config` package is available on [PyPI](https://pypi.org/project/vyper-config/).
 
 ## What is Vyper?
 
 Vyper is a complete configuration solution for Python applications including 12 factor apps. It is designed
-to work within an application, and can handle all types of configuration needs
-and formats. It supports:
+to work within an application, and can handle all types of configuration needs and formats. It supports:
 
 * setting defaults
 * reading from JSON, TOML, and YAML config files
@@ -215,41 +216,40 @@ os.environ['SPF_ID'] = '13'  # typically done outside of the app
 id = v.get('id')  # 13
 ```
 
-### Working with arguments
+### Working with command line arguments
 
-Vyper has the ability to bind to flags. Specifically, Viper supports
-`argparse` via the internal proxy `FlagsProvider`.
-`FlagsProvider.add_argument()` is calling `argparse.ArgumentParser.add_argument()`
-under the hood, so it will forward every params as is.
-See [doc](docs.python.org/3.6/library/argparse.html#argparse.ArgumentParser)
+Vyper has the ability to bind to command line arguments.
+Specifically, Viper supports `argparse`.
+See [doc](docs.python.org/3.7/library/argparse.html#argparse.ArgumentParser)
 for more details.
 
-The value is  set when the binding method is called.
+The values are set when the binding method is called.
 
-As it deals with cmd args params, the `bind_flags` needs to be called passing
-cmd args `sys.argv` but `default` which has to be set using vyper's default mechanism.
+As it deals with command line arguments, the `bind_args()` method needs to be called passing
+an instance of argparse.ArgumentParser(). The method also sets defaults based on what you pass
+via `add_argument()` `default` parameter.
 
-Note: In case a default is set here, it will be considered as a value
+Note: If you don't specify a default, the values will be set to `None`.
 
 ```python
-fp = vyper.FlagsProvider()
-fp.add_argument('--app-name', type=str, help='Application and process name')
-fp.add_argument('--env', type=str, choices=['dev', 'pre-prod', 'prod'], help='Application env')
+p = argparse.ArgumentParser(description="Application settings")
+p.add_argument('--app-name', type=str, help='Application and process name')
+p.add_argument('--env', type=str, choices=['dev', 'pre-prod', 'prod'], help='Application env')
+p.add_argument('--port', type=int, default=5000, help='Application port')
+p.add_argument('--password', type=str, help='Application password')
+v.bind_args(p)
 
-# sys.argv = ["test.py", "--app-name=cmd-app", "--env=prod"]
-self.v.bind_flags(fp, sys.argv)
+# "your_app.py", "--app-name=cmd-app", "--env=prod"
 
 app_name = v.get('app_name')  # 'cmd-app'
 env = v.get('env')            # 'prod'
+port = v.get('port')          # 5000
+password = v.get('password')  # `None`
 ```
 
-### Remote Key/Value Store Support
+## Getting Values From Vyper
 
-TODO
-
-## Getting Values From Viper
-
-In Viper, there are a few ways to get a value depending on the value's type.
+In Vyper, there are a few ways to get a value depending on the value's type.
 The following functions and methods exist:
 
  * `get(key)`
@@ -336,14 +336,6 @@ will be returned instead. E.g.
 v.get_string('datastore.metric.host')  # returns '0.0.0.0'
 ```
 
-### Extract sub-tree
-
-TODO
-
-### Unmarshaling
-
-TODO
-
 ## Vyper or Vypers?
 
 Vyper comes ready to use out of the box. There is no configuration or
@@ -353,8 +345,3 @@ provides this. It is similar to a singleton.
 
 In all of the examples above, they demonstrate using vyper in it's singleton
 style approach.
-
-### Working with multiple vypers
-
-TODO
-

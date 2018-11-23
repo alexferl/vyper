@@ -1,9 +1,11 @@
+import argparse
 import logging
 import os
 import pprint
+
 from builtins import str as text
 
-from . import constants, errors, flags, remote, util, watch
+from . import constants, errors, remote, util, watch
 
 log = logging.getLogger("vyper")
 
@@ -14,12 +16,11 @@ class Vyper(object):
     them according to the source's priority.
     The priority of the sources is the following:
         1. overrides
-        2. flags
-        3. args
-        4. env. variables
-        5. config file
-        6. key/value store
-        7. defaults
+        2. args
+        3. env. variables
+        4. config file
+        5. key/value store
+        6. defaults
 
     For example, if values from the following sources were loaded:
 
@@ -66,14 +67,13 @@ class Vyper(object):
         self._automatic_env_applied = False
         self._env_key_replacer = None
 
-        self._config = {}
-        self._override = {}
-        self._defaults = {}
-        self._kvstore = {}
-        self._args = {}
-        self._flags = {}
-        self._env = {}
         self._aliases = {}
+        self._override = {}
+        self._args = {}
+        self._env = {}
+        self._config = {}
+        self._kvstore = {}
+        self._defaults = {}
 
         self._on_config_change = None
         self._on_remote_config_change = None
@@ -129,9 +129,10 @@ class Vyper(object):
     def add_remote_provider(self, provider, client, path):
         """Adds a remote configuration source.
         Remote Providers are searched in the order they are added.
-        provider is a string value, "etcd" or "consul" are currently supported.
-        endpoint is the url. etcd requires http://ip:port consul requires
-        ip:port path is the path in the k/v store to retrieve configuration
+        provider is a string value, "etcd", "consul" and "zookeeper" are
+        currently supported.
+        client is a client object
+        path is the path in the k/v store to retrieve configuration
         To retrieve a config file called myapp.json from /configs/myapp.json
         you should set path to /configs and set config name (set_config_name)
         to "myapp"
@@ -173,15 +174,6 @@ class Vyper(object):
                 return self._search_dict(d[key], keys[1::])
             else:
                 return None
-
-    def bind_flags(self, flag_provider, args=None):
-        """ Bind flags using FlagsProvider """
-        args = args or []
-        if flag_provider is not None:
-            flags = flag_provider.get_flags(args)
-            for f in flags:
-                k = self._real_key(f.lower())
-                self._flags.update({k: flags.get(f)})
 
     def get(self, key):
         """Vyper is essentially repository for configurations.
@@ -248,10 +240,29 @@ class Vyper(object):
         return cls
 
     def bind_args(self, args):
-        return self.bind_arg_values(args)
+        if isinstance(args, argparse.ArgumentParser):
+            return self.bind_parser_values(args)
+        else:
+            return self.bind_arg_values(args)
 
     def bind_arg(self, key, arg):
         return self.bind_arg_value(key, arg)
+
+    def _parse_args(self, parser, args=None):
+        if args:
+            return vars(parser.parse_args(args))
+        return vars(parser.parse_args([]))
+
+    def bind_parser_values(self, parser, args=None):
+        # method mostly for testing
+        defaults = \
+            {k: parser.get_default(k) for k in self._parse_args(parser, args).keys()}
+        args_dict = self._parse_args(parser, args)
+
+        for k, val in defaults.items():
+            self.set_default(k, val)
+            if self.get(k) != args_dict[k]:
+                self.bind_arg(k, args_dict[k])
 
     def bind_arg_values(self, args):
         for k, v in args.items():
@@ -292,7 +303,7 @@ class Vyper(object):
                 "final_key": parts[-1],
                 "env_key": env_key
             }
-            
+
             if self._env.get(parts[0]) is None:
                 self._env[parts[0]] = [env_info]
             else:
@@ -302,7 +313,7 @@ class Vyper(object):
 
     def _find_real_key(self, key, source):
         return next(
-            (real_key for real_key in source.keys() if real_key.lower() == key.lower()), 
+            (real for real in source.keys() if real.lower() == key.lower()),
             None)
 
     def _find_insensitive(self, key, source):
@@ -312,35 +323,34 @@ class Vyper(object):
     def _set_insensitive(self, key, val, source):
         real_key = self._find_real_key(key, source)
         if real_key is None:
-            raise KeyError("No case insensitive variant of {0} found.".format(key))
+            msg = "No case insensitive variant of {0} found.".format(key)
+            raise KeyError(msg)
 
         source[real_key] = val
 
     def _find(self, key):
         """Given a key, find the value
         Vyper will check in the following order:
-        override, flags, arg, env, config file, key/value store, default
+        override, arg, env, config file, key/value store, default
         Vyper will check to see if an alias exists first.
         """
         key = self._real_key(key)
 
-        val = self._args.get(key)
-        if val is not None:
-            log.debug("{0} found in args: {1}".format(key, val))
-            return val
-
+        # OVERRIDES
         val = self._override.get(key)
         if val is not None:
             log.debug("{0} found in override: {1}".format(key, val))
             return val
 
-        val = self._flags.get(key)
+        # ARGS
+        val = self._args.get(key)
         if val is not None:
-            log.debug("{0} found in flags: {1}".format(key, val))
+            log.debug("{0} found in args: {1}".format(key, val))
             return val
 
+        # ENVIRONMENT VARIABLES
         if self._automatic_env_applied:
-            # even if it hasn"t been registered, if `automatic_env` is used,
+            # even if it hasn't been registered, if `automatic_env` is used,
             # check any `get` request
             val = self._get_env(self._merge_with_env_prefix(key))
             if val is not None:
@@ -349,32 +359,33 @@ class Vyper(object):
 
         env_key = self._find_insensitive(key, self._env)
         log.debug("Looking for {0} in env".format(key))
-        log.debug(self._env)
         if isinstance(env_key, list):
             parent = self._find_insensitive(key, self._config)
             found_in_env = False
             log.debug("Found env key parent {0}: {1}".format(key, parent))
 
             for item in env_key:
-                log.debug("{0} registered as env var parent {1}:".format(key, item["env_key"]))
+                log.debug("{0} registered as env var parent {1}:".format(
+                    key, item["env_key"]))
                 val = self._get_env(item["env_key"])
-                
+
                 if val is not None:
-                    log.debug("{0} found in environment: {1}".format(item["env_key"], val))
+                    log.debug("{0} found in environment: {1}".format(
+                        item["env_key"], val))
                     temp = parent
                     for path in item["path"]:
                         real_key = self._find_real_key(path, temp)
                         temp = temp[real_key]
-                    
-                    real_key = self._set_insensitive(item["final_key"], val, temp)
+
+                    self._set_insensitive(item["final_key"], val, temp)
                     found_in_env = True
                 else:
                     log.debug("{0} env value unset".format(item["env_key"]))
-            
+
             if found_in_env:
                 return parent
 
-        elif env_key is not None:            
+        elif env_key is not None:
             log.debug("{0} registered as env var: {1}".format(key, env_key))
             val = self._get_env(env_key)
             if val is not None:
@@ -383,6 +394,7 @@ class Vyper(object):
             else:
                 log.debug("{0} env value unset".format(env_key))
 
+        # CONFIG FILE
         val = self._find_insensitive(key, self._config)
         if val is not None:
             log.debug("{0} found in config: {1}".format(key, val))
@@ -396,14 +408,17 @@ class Vyper(object):
             if source is not None and isinstance(source, dict):
                 val = self._search_dict(source, path[1::])
                 if val is not None:
-                    log.debug("{0} found in nested config: {1}".format(key, val))
+                    log.debug("{0} found in nested config: {1}".format(
+                        key, val))
                     return val
 
+        # KEY/VALUE STORE
         val = self._kvstore.get(key)
         if val is not None:
             log.debug("{0} found in key/value store: {1}".format(key, val))
             return val
 
+        # DEFAULTS
         val = self._defaults.get(key)
         if val is not None:
             log.debug("{0} found in defaults: {1}".format(key, val))
@@ -450,12 +465,8 @@ class Vyper(object):
 
             if exists is None:
                 # if we alias something that exists in one of the dicts to
-                # another name, we"ll never be able to get that value using the
+                # another name, we'll never be able to get that value using the
                 # original name, so move the config value to the new _real_key.
-                val = self._flags.get("alias")
-                if val:
-                    self._flags.pop(alias)
-                    self._flags[key] = val
                 val = self._config.get("alias")
                 if val:
                     self._config.pop(alias)
@@ -515,7 +526,7 @@ class Vyper(object):
         and key/value stores, searching in one of the defined paths.
         """
         log.info("Attempting to read in config file")
-        if self._get_config_type() not in constants.SUPPORTED_EXTS:
+        if self._get_config_type() not in constants.SUPPORTED_EXTENSIONS:
             raise errors.UnsupportedConfigError(self._get_config_type())
 
         with open(self._get_config_file()) as fp:
@@ -527,7 +538,7 @@ class Vyper(object):
 
     def merge_in_config(self):
         log.info("Attempting to merge in config file")
-        if self._get_config_type() not in constants.SUPPORTED_EXTS:
+        if self._get_config_type() not in constants.SUPPORTED_EXTENSIONS:
             raise errors.UnsupportedConfigError(self._get_config_type())
 
         file_ = self._get_config_file()
@@ -592,14 +603,13 @@ class Vyper(object):
         for rp in self._remote_providers:
             rp.add_listener()
             return None
-
         raise errors.RemoteConfigError("No Files Found")
 
     def all_keys(self, uppercase_keys=False):
         """Return all keys regardless where they are set."""
         d = {}
 
-        for k in self._defaults.keys():
+        for k in self._override.keys():
             d[k.upper() if uppercase_keys else k.lower()] = {}
 
         for k in self._args.keys():
@@ -614,10 +624,7 @@ class Vyper(object):
         for k in self._kvstore.keys():
             d[k.upper() if uppercase_keys else k.lower()] = {}
 
-        for k in self._override.keys():
-            d[k.upper() if uppercase_keys else k.lower()] = {}
-
-        for k in self._flags.keys():
+        for k in self._defaults.keys():
             d[k.upper() if uppercase_keys else k.lower()] = {}
 
         for k in self._aliases.keys():
@@ -671,7 +678,7 @@ class Vyper(object):
     def _search_in_path(self, path):
         log.debug("Searching for config in: {0}".format(path))
 
-        for ext in constants.SUPPORTED_EXTS:
+        for ext in constants.SUPPORTED_EXTENSIONS:
             full_path = "{0}/{1}.{2}".format(path, self._config_name, ext)
             log.debug("Checking for {0}".format(full_path))
             if util.exists(full_path):
@@ -697,19 +704,18 @@ class Vyper(object):
 
     def debug(self):  # pragma: no cover
         """Prints all configuration registries for debugging purposes."""
+
         print("Aliases:")
         pprint.pprint(self._aliases)
         print("Override:")
         pprint.pprint(self._override)
-        print("Flags:")
-        pprint.pprint(self._flags)
         print("Args:")
         pprint.pprint(self._args)
         print("Env:")
         pprint.pprint(self._env)
-        print("Key/Value Store:")
-        pprint.pprint(self._kvstore)
         print("Config:")
         pprint.pprint(self._config)
+        print("Key/Value Store:")
+        pprint.pprint(self._kvstore)
         print("Defaults:")
         pprint.pprint(self._defaults)

@@ -22,7 +22,7 @@ class RemoteProvider(object):
     def __init__(self, provider, client, path, v):
         self.v = v
         config_type = self.v._config_type
-        if config_type != "" and config_type in constants.SUPPORTED_EXTS:
+        if config_type != "" and config_type in constants.SUPPORTED_EXTENSIONS:
             self.config_type = config_type
         else:
             raise errors.UnsupportedConfigError(config_type)
