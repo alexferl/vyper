@@ -78,6 +78,8 @@ class Vyper(object):
         self._on_config_change = None
         self._on_remote_config_change = None
 
+        self.parse_argv_disabled = False
+
     def on_config_change(self, func, *args, **kwargs):
         self._on_config_change = lambda: func(*args, **kwargs)
 
@@ -239,30 +241,33 @@ class Vyper(object):
 
         return cls
 
-    def bind_args(self, args):
-        if isinstance(args, argparse.ArgumentParser):
-            return self.bind_parser_values(args)
+    def bind_args(self, parser):
+        if isinstance(parser, argparse.ArgumentParser):
+            return self._bind_parser_values(parser)
         else:
-            return self.bind_arg_values(args)
+            return self.bind_arg_values(parser)
 
     def bind_arg(self, key, arg):
         return self.bind_arg_value(key, arg)
 
-    def _parse_args(self, parser, args=None):
-        if args:
-            return vars(parser.parse_args(args))
-        return vars(parser.parse_args())
+    def _parse_args(self, parser, overrides=None):
+        if overrides:
+            return vars(parser.parse_args(overrides))
+        if not self.parse_argv_disabled:
+            return vars(parser.parse_args())
+        else:
+            return vars(parser.parse_args([]))
 
-    def bind_parser_values(self, parser, args=None):
-        # method mostly for testing
+    def _bind_parser_values(self, parser, overrides=None):
+        # method mostly for testing, use bind_args()
+        args = self._parse_args(parser, overrides)
         defaults = \
-            {k: parser.get_default(k) for k in self._parse_args(parser, args).keys()}
-        args_dict = self._parse_args(parser, args)
+            {k: parser.get_default(k) for k in args.keys()}
 
-        for k, val in defaults.items():
-            self.set_default(k, val)
-            if self.get(k) != args_dict[k]:
-                self.bind_arg(k, args_dict[k])
+        for k, v in defaults.items():
+            self.set_default(k, v)
+            if args[k] != defaults[k]:
+                self.bind_arg(k, args[k])
 
     def bind_arg_values(self, args):
         for k, v in args.items():

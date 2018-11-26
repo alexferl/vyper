@@ -98,6 +98,7 @@ json_camel_case_example = {
 class TestVyper(unittest.TestCase):
     def setUp(self):
         self.v = vyper.Vyper()
+        self.v.parse_argv_disabled = True
 
     def _init_configs(self):
         self.v.set_config_type("yaml")
@@ -216,7 +217,7 @@ class TestVyper(unittest.TestCase):
         fp.add_argument("--env", type=str,
                         choices=["dev", "pre-prod", "prod"],
                         help="Application env (default %(default)s)")
-        self.v.bind_parser_values(fp, ["--app-name=cmd-app", "--env=prod"])
+        self.v._bind_parser_values(fp, ["--app-name=cmd-app", "--env=prod"])
         self.assertEqual("cmd-app", self.v.get("app_name"))
         self.assertEqual("prod", self.v.get("env"))
 
@@ -230,7 +231,7 @@ class TestVyper(unittest.TestCase):
         # Setting a value flag which is not in the choices list should raise a system error
         # Help will be shown in cmd to see how to use the flag.
         with self.assertRaises(SystemExit):
-            self.v.bind_parser_values(
+            self.v._bind_parser_values(
                 p,
                 ["--app-name=cmd-app", "--env=not-in-the-list"])
 
@@ -256,7 +257,7 @@ class TestVyper(unittest.TestCase):
         p.add_argument("--default-param-arg", type=str,
                        default="default_from_arg")
 
-        self.v.bind_parser_values(p, ["--yaml-param=from_flags",
+        self.v._bind_parser_values(p, ["--yaml-param=from_flags",
                                       "--default-param=from_flags"])
 
         self.assertEqual("from_flags", self.v.get("yaml_param"))
