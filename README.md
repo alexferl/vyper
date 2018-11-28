@@ -166,7 +166,7 @@ v.get_bool('verbose')  # True
 
 ### Working with Environment Variables
 
-Viper has full support for environment variables. This enables 12 factor
+Vyper has full support for environment variables. This enables 12 factor
 applications out of the box. There are four methods that exist to aid working
 with ENV:
 
@@ -219,7 +219,7 @@ id = v.get('id')  # 13
 ### Working with command line arguments
 
 Vyper has the ability to bind to command line arguments.
-Specifically, Viper supports `argparse`.
+Specifically, Vyper supports `argparse`.
 See [doc](docs.python.org/3.7/library/argparse.html#argparse.ArgumentParser)
 for more details.
 
