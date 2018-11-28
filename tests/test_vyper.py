@@ -510,3 +510,17 @@ class TestVyper(unittest.TestCase):
         self.assertEqual(c.id, 1)
         self.assertEqual(c.firstname, "Steve")
         self.assertEqual(c.surname, "Owen")
+
+    def test_get_bool(self):
+        self.v.set("mykey", "FALSE")
+        self.assertEqual(self.v.get_bool("mykey"), False)
+
+        self.v.set("mykey", "fAlSe")
+        self.assertEqual(self.v.get_bool("mykey"), False)
+
+        # make sure we don't try to .lower() non-strings
+        self.v.set("myintkey", 3)
+        self.assertEqual(self.v.get_bool("myintkey"), True)
+
+        self.v.set("myfloatkey", 3.14159)
+        self.assertEqual(self.v.get_bool("myfloatkey"), True)

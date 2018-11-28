@@ -203,7 +203,11 @@ class Vyper(object):
         return str(self.get(key))
 
     def get_bool(self, key):
-        return bool(self.get(key))
+        val = self.get(key)
+        if isinstance(val, str):
+            if val.lower() == 'false':
+                return False
+        return bool(val)
 
     def get_int(self, key):
         return int(self.get(key))
