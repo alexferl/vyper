@@ -470,25 +470,25 @@ class Vyper(object):
         alias = alias.lower()
         key = key.lower()
         if alias != key and alias != self._real_key(key):
-            exists = self._aliases.get("alias")
+            exists = self._aliases.get(alias)
 
             if exists is None:
                 # if we alias something that exists in one of the dicts to
                 # another name, we'll never be able to get that value using the
                 # original name, so move the config value to the new _real_key.
-                val = self._config.get("alias")
+                val = self._config.get(alias)
                 if val:
                     self._config.pop(alias)
                     self._config[key] = val
-                val = self._kvstore.get("alias")
+                val = self._kvstore.get(alias)
                 if val:
                     self._kvstore.pop(alias)
                     self._kvstore[key] = val
-                val = self._defaults.get("alias")
+                val = self._defaults.get(alias)
                 if val:
                     self._defaults.pop(alias)
                     self._defaults[key] = val
-                val = self._override.get("alias")
+                val = self._override.get(alias)
                 if val:
                     self._override.pop(alias)
                     self._override[key] = val
