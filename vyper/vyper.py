@@ -550,9 +550,10 @@ class Vyper(object):
         if self._get_config_type() not in constants.SUPPORTED_EXTENSIONS:
             raise errors.UnsupportedConfigError(self._get_config_type())
 
-        file_ = self._get_config_file()
+        with open(self._get_config_file()) as fp:
+            f = fp.read()
 
-        return self.merge_config(file_)
+        return self.merge_config(f)
 
     def read_config(self, file_):
         """Vyper will read a configuration file, setting existing keys to
@@ -571,11 +572,10 @@ class Vyper(object):
 
     def _merge_dicts(self, src, target):
         for k, v in src.items():
-            if k not in target:
-                target[k] = v
-            elif isinstance(v, dict):
+            if isinstance(v, dict):
                 self._merge_dicts(v, target[k])
-                # return target
+            else:
+                target[k] = v
 
     def read_remote_config(self):
         """Attempts to get configuration from a remote source
@@ -653,6 +653,7 @@ class Vyper(object):
     def set_config_name(self, name):
         """Name for the config file. Does not include extension."""
         self._config_name = name
+        self._config_file = ""
 
     def set_config_type(self, type_):
         """Sets the type of the configuration returned by the
@@ -673,16 +674,14 @@ class Vyper(object):
             return ""
 
     def _get_config_file(self):
-        if self._config_file != "":
-            return self._config_file
+        if self._config_file == "":
+            try:
+                cf = self._find_config_file()
+                self._config_file = cf
+            except errors.ConfigFileNotFoundError:
+                return ""
 
-        try:
-            cf = self._find_config_file()
-        except errors.ConfigFileNotFoundError:
-            return ""
-
-        self._config_file = cf
-        return self._get_config_file()
+        return self._config_file
 
     def _search_in_path(self, path):
         log.debug("Searching for config in: {0}".format(path))

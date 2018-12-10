@@ -258,7 +258,7 @@ class TestVyper(unittest.TestCase):
                        default="default_from_arg")
 
         self.v._bind_parser_values(p, ["--yaml-param=from_flags",
-                                      "--default-param=from_flags"])
+                                       "--default-param=from_flags"])
 
         self.assertEqual("from_flags", self.v.get("yaml_param"))
         self.assertEqual("from_overrides", self.v.get("overrides_param"))
@@ -524,3 +524,26 @@ class TestVyper(unittest.TestCase):
 
         self.v.set("myfloatkey", 3.14159)
         self.assertEqual(self.v.get_bool("myfloatkey"), True)
+
+    def test_merge_config(self):
+        x = "a: abc"
+        y = "b: xyz"
+        self.v.set_config_type("yaml")
+
+        self.v.read_config(yaml.dump(text(x)))
+        self.assertEqual(self.v.get("a"), "abc")
+
+        self.v.merge_config(yaml.dump(text(y)))
+        self.assertEqual(self.v.get("a"), "abc")
+        self.assertEqual(self.v.get("b"), "xyz")
+
+    def test_merge_overwrite_key(self):
+        x = "a: abc"
+        y = "a: xyz"
+        self.v.set_config_type("yaml")
+
+        self.v.read_config(yaml.dump(text(x)))
+        self.assertEqual(self.v.get("a"), "abc")
+
+        self.v.merge_config(yaml.dump(text(y)))
+        self.assertEqual(self.v.get("a"), "xyz")
