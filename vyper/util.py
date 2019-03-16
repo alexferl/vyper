@@ -51,9 +51,9 @@ def unmarshall_config_reader(file_, d, config_type):
 
     if config_type in ["yaml", "yml"]:
         try:
-            f = yaml.load(file_)
+            f = yaml.safe_load(file_)
             try:
-                d.update(yaml.load(f))
+                d.update(yaml.safe_load(f))
             except AttributeError:  # to read files
                 d.update(f)
         except Exception as e:
