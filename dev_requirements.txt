@@ -1,7 +1,7 @@
 -r requirements.txt
 
-Flask==1.0.2
-kazoo==2.6.0
-pytest==4.0.0
-python-consul==1.1.0
-python-etcd==0.4.5
+Flask>=1.0.2
+kazoo>=2.6.0
+pytest>=4.0.0
+python-consul>=1.1.0
+python-etcd>=0.4.5

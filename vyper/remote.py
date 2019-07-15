@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from distconfig import Proxy
 import pytoml as toml
 import yaml
@@ -50,7 +48,7 @@ class RemoteProvider(object):
         if self.config_type == "json":
             return json.loads
         elif self.config_type in ["yaml", "yml"]:
-            return yaml.load
+            return yaml.safe_load
         elif self.config_type == "toml":
             return toml.loads
 
@@ -72,4 +70,3 @@ class RemoteProvider(object):
 
     def _update_kvstore(self, e):
         self.v._kvstore = e
-

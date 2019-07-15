@@ -102,7 +102,7 @@ class TestVyper(unittest.TestCase):
 
     def _init_configs(self):
         self.v.set_config_type("yaml")
-        r = yaml.dump(text(yaml_example))
+        r = yaml.safe_dump(text(yaml_example))
         self.v._unmarshall_reader(r, self.v._config)
 
         self.v.set_config_type("json")
@@ -115,7 +115,7 @@ class TestVyper(unittest.TestCase):
 
     def _init_yaml(self):
         self.v.set_config_type("yaml")
-        r = yaml.dump(yaml_example)
+        r = yaml.safe_dump(yaml_example)
         self.v._unmarshall_reader(r, self.v._config)
 
     def _init_json(self, fixture=None):
@@ -166,7 +166,7 @@ class TestVyper(unittest.TestCase):
 
     def test_unmarshalling(self):
         self.v.set_config_type("yaml")
-        r = yaml.dump(yaml_example)
+        r = yaml.safe_dump(yaml_example)
         self.v._unmarshall_reader(r, self.v._config)
         self.assertTrue(self.v.in_config("name"))
         self.assertFalse(self.v.in_config("state"))
@@ -175,7 +175,7 @@ class TestVyper(unittest.TestCase):
 
     def test_yaml_duplication_nested(self):
         self.v.set_config_type("yaml")
-        r = yaml.dump(yaml_duplicate_in_nested)
+        r = yaml.safe_dump(yaml_duplicate_in_nested)
         self.v._unmarshall_reader(r, self.v._config)
         self.assertEqual("yeap", self.v.get("sweet.home.alabama"))
         self.assertEqual("noway", self.v.get("sweet.job.alabama"))
@@ -238,7 +238,7 @@ class TestVyper(unittest.TestCase):
     def test_args_override(self):
         # Yaml config
         self.v.set_config_type("yaml")
-        r = yaml.dump("yaml_param: from_yaml")
+        r = yaml.safe_dump("yaml_param: from_yaml")
         self.v._unmarshall_reader(r, self.v._config)
 
         # Overrides
@@ -403,7 +403,7 @@ class TestVyper(unittest.TestCase):
 
     def test_is_set(self):
         self.v.set_config_type("yaml")
-        self.v.read_config(yaml.dump(text(yaml_example)))
+        self.v.read_config(yaml.safe_dump(text(yaml_example)))
         self.assertTrue(self.v.is_set("clothing.jacket"))
         self.assertFalse(self.v.is_set("clothing.jackets"))
         self.assertFalse(self.v.is_set("helloworld"))
@@ -483,7 +483,7 @@ class TestVyper(unittest.TestCase):
 
     def test_sub(self):
         self.v.set_config_type("yaml")
-        self.v.read_config(yaml.dump(text(yaml_example)))
+        self.v.read_config(yaml.safe_dump(text(yaml_example)))
 
         subv = self.v.sub("clothing")
         self.assertEqual(self.v.get("clothing.pants.size"),
@@ -530,10 +530,10 @@ class TestVyper(unittest.TestCase):
         y = "b: xyz"
         self.v.set_config_type("yaml")
 
-        self.v.read_config(yaml.dump(text(x)))
+        self.v.read_config(yaml.safe_dump(text(x)))
         self.assertEqual(self.v.get("a"), "abc")
 
-        self.v.merge_config(yaml.dump(text(y)))
+        self.v.merge_config(yaml.safe_dump(text(y)))
         self.assertEqual(self.v.get("a"), "abc")
         self.assertEqual(self.v.get("b"), "xyz")
 
@@ -542,8 +542,8 @@ class TestVyper(unittest.TestCase):
         y = "a: xyz"
         self.v.set_config_type("yaml")
 
-        self.v.read_config(yaml.dump(text(x)))
+        self.v.read_config(yaml.safe_dump(text(x)))
         self.assertEqual(self.v.get("a"), "abc")
 
-        self.v.merge_config(yaml.dump(text(y)))
+        self.v.merge_config(yaml.safe_dump(text(y)))
         self.assertEqual(self.v.get("a"), "xyz")

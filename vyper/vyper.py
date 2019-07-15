@@ -3,8 +3,6 @@ import logging
 import os
 import pprint
 
-from builtins import str as text
-
 from . import constants, errors, remote, util, watch
 
 log = logging.getLogger("vyper")
@@ -214,9 +212,6 @@ class Vyper(object):
 
     def get_float(self, key):
         return float(self.get(key))
-
-    def get_unicode(self, key):
-        return text(self.get(key))
 
     def get_bytes(self, key):
         return b"{0}".format(self.get(key))
