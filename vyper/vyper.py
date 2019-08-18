@@ -198,7 +198,8 @@ class Vyper(object):
         return val
 
     def get_string(self, key):
-        return str(self.get(key))
+        val = self.get(key)
+        return str(val) if val is not None else ''
 
     def get_bool(self, key):
         val = self.get(key)
@@ -208,10 +209,12 @@ class Vyper(object):
         return bool(val)
 
     def get_int(self, key):
-        return int(self.get(key))
+        val = self.get(key)
+        return int(val) if val is not None else 0
 
     def get_float(self, key):
-        return float(self.get(key))
+        val = self.get(key)
+        return float(val) if val is not None else 0.0
 
     def get_bytes(self, key):
         return b"{0}".format(self.get(key))
