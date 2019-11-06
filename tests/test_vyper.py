@@ -547,3 +547,31 @@ class TestVyper(unittest.TestCase):
 
         self.v.merge_config(yaml.safe_dump(text(y)))
         self.assertEqual(self.v.get("a"), "xyz")
+
+    def test_merge_recurse_missing_source_key(self):
+        x = "a: abc"
+        y = """a: xyz
+b:
+  c: def"""
+        self.v.set_config_type("yaml")
+
+        self.v.read_config(yaml.safe_dump(text(x)))
+        self.assertEqual(self.v.get("a"), "abc")
+
+        self.v.merge_config(yaml.safe_dump(text(y)))
+        self.assertEqual(self.v.get("a"), "xyz")
+        self.assertEqual(self.v.get("b.c"), "def")
+
+    def test_merge_recurse_missing_destination_key(self):
+        x = """a: abc
+b:
+  c: xyz"""
+        y = "a: xyz"
+        self.v.set_config_type("yaml")
+
+        self.v.read_config(yaml.safe_dump(text(x)))
+        self.assertEqual(self.v.get("a"), "abc")
+
+        self.v.merge_config(yaml.safe_dump(text(y)))
+        self.assertEqual(self.v.get("a"), "xyz")
+        self.assertEqual(self.v.get("b.c"), "xyz")
