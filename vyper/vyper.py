@@ -570,7 +570,7 @@ class Vyper(object):
 
     def _merge_dicts(self, src, target):
         for k, v in src.items():
-            if isinstance(v, dict):
+            if isinstance(v, dict) and k in target:
                 self._merge_dicts(v, target[k])
             else:
                 target[k] = v
