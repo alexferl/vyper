@@ -1,10 +1,10 @@
 language: python
 sudo: required
-dist: xenial
+dist: bionic
 python:
-  - "3.5"
   - "3.6"
   - "3.7"
+  - "3.8"
 cache: pip
 install: pip install -r dev_requirements.txt
 script: python setup.py test
