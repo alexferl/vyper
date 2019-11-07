@@ -575,3 +575,11 @@ b:
         self.v.merge_config(yaml.safe_dump(text(y)))
         self.assertEqual(self.v.get("a"), "xyz")
         self.assertEqual(self.v.get("b.c"), "xyz")
+
+    def test_not_found(self):
+        not_found_key = 'not.found.key'
+        self.assertEqual(self.v.get(not_found_key), None)
+        self.assertEqual(self.v.get_string(not_found_key), '')
+        self.assertEqual(self.v.get_int(not_found_key), 0)
+        self.assertEqual(self.v.get_float(not_found_key), 0.0)
+        self.assertEqual(self.v.get_bool(not_found_key), False)
