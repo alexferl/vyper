@@ -12,7 +12,7 @@ from . import constants, errors
 PROVIDER_TYPE = {
     "consul": "distconfig.backends.consul.ConsulBackend",
     "etcd": "distconfig.backends.etcd.EtcdBackend",
-    "zookeeper": "distconfig.backends.zookeeper.ZooKeeperBackend"
+    "zookeeper": "distconfig.backends.zookeeper.ZooKeeperBackend",
 }
 
 
@@ -26,9 +26,7 @@ class RemoteProvider(object):
             raise errors.UnsupportedConfigError(config_type)
 
         provider = PROVIDER_TYPE.get(provider)
-        self.proxy = Proxy.configure(provider,
-                                     client=client,
-                                     parser=self._get_parser())
+        self.proxy = Proxy.configure(provider, client=client, parser=self._get_parser())
 
         self.config = self.proxy.get_config(path)
 

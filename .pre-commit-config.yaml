@@ -1,0 +1,10 @@
+repos:
+- repo: local
+  hooks:
+  - id: black
+    name: black
+    stages: [commit]
+    language: system
+    entry: venv/bin/black -t py37 --exclude venv .
+    types: [python]
+

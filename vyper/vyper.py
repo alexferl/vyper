@@ -142,17 +142,15 @@ class Vyper(object):
 
         host = ""
         if provider == "etcd":
-            host = "{0}://{1}:{2}".format(client.protocol, client.host,
-                                          client.port)
+            host = "{0}://{1}:{2}".format(client.protocol, client.host, client.port)
         elif provider == "consul":
-            host = "{0}://{1}:{2}".format(client.http.scheme, client.http.host,
-                                          client.http.port)
+            host = "{0}://{1}:{2}".format(
+                client.http.scheme, client.http.host, client.http.port
+            )
         elif provider == "zookeeper":
-            host = ",".join(
-                str("{0}:{1}".format(h[0], h[1])) for h in client.hosts)
+            host = ",".join(str("{0}:{1}".format(h[0], h[1])) for h in client.hosts)
 
-        log.info("Adding {0}:{1} to remote provider list".format(
-            provider, host))
+        log.info("Adding {0}:{1} to remote provider list".format(provider, host))
 
         rp = remote.RemoteProvider(provider, client, path, self)
         if not self._provider_path_exists(rp):
@@ -199,12 +197,12 @@ class Vyper(object):
 
     def get_string(self, key):
         val = self.get(key)
-        return str(val) if val is not None else ''
+        return str(val) if val is not None else ""
 
     def get_bool(self, key):
         val = self.get(key)
         if isinstance(val, str):
-            if val.lower() == 'false':
+            if val.lower() == "false":
                 return False
         return bool(val)
 
@@ -263,8 +261,7 @@ class Vyper(object):
     def _bind_parser_values(self, parser, overrides=None):
         # method mostly for testing, use bind_args()
         args = self._parse_args(parser, overrides)
-        defaults = \
-            {k: parser.get_default(k) for k in args.keys()}
+        defaults = {k: parser.get_default(k) for k in args.keys()}
 
         for k, v in defaults.items():
             self.set_default(k, v)
@@ -305,11 +302,7 @@ class Vyper(object):
 
         if self._key_delimiter in key:
             parts = input_[0].split(self._key_delimiter)
-            env_info = {
-                "path": parts[1:-1],
-                "final_key": parts[-1],
-                "env_key": env_key
-            }
+            env_info = {"path": parts[1:-1], "final_key": parts[-1], "env_key": env_key}
 
             if self._env.get(parts[0]) is None:
                 self._env[parts[0]] = [env_info]
@@ -320,8 +313,8 @@ class Vyper(object):
 
     def _find_real_key(self, key, source):
         return next(
-            (real for real in source.keys() if real.lower() == key.lower()),
-            None)
+            (real for real in source.keys() if real.lower() == key.lower()), None
+        )
 
     def _find_insensitive(self, key, source):
         real_key = self._find_real_key(key, source)
@@ -372,13 +365,15 @@ class Vyper(object):
             log.debug("Found env key parent {0}: {1}".format(key, parent))
 
             for item in env_key:
-                log.debug("{0} registered as env var parent {1}:".format(
-                    key, item["env_key"]))
+                log.debug(
+                    "{0} registered as env var parent {1}:".format(key, item["env_key"])
+                )
                 val = self._get_env(item["env_key"])
 
                 if val is not None:
-                    log.debug("{0} found in environment: {1}".format(
-                        item["env_key"], val))
+                    log.debug(
+                        "{0} found in environment: {1}".format(item["env_key"], val)
+                    )
                     temp = parent
                     for path in item["path"]:
                         real_key = self._find_real_key(path, temp)
@@ -415,8 +410,7 @@ class Vyper(object):
             if source is not None and isinstance(source, dict):
                 val = self._search_dict(source, path[1::])
                 if val is not None:
-                    log.debug("{0} found in nested config: {1}".format(
-                        key, val))
+                    log.debug("{0} found in nested config: {1}".format(key, val))
                     return val
 
         # KEY/VALUE STORE
@@ -493,8 +487,11 @@ class Vyper(object):
 
                 self._aliases[alias] = key
         else:
-            log.warning("Creating circular reference alias {0} {1} {2}".format(
-                alias, key, self._real_key(key)))
+            log.warning(
+                "Creating circular reference alias {0} {1} {2}".format(
+                    alias, key, self._real_key(key)
+                )
+            )
 
     def _real_key(self, key):
         new_key = self._aliases.get(key)
@@ -697,16 +694,18 @@ class Vyper(object):
         """Search all `config_paths` for any config file.
         Returns the first path that exists (and is a config file).
         """
-        log.info("Searching for config in: {0}".format(
-            ", ".join(str(p) for p in self._config_paths)))
+        log.info(
+            "Searching for config in: {0}".format(
+                ", ".join(str(p) for p in self._config_paths)
+            )
+        )
 
         for cp in self._config_paths:
             f = self._search_in_path(cp)
             if f != "":
                 return f
 
-        raise errors.ConfigFileNotFoundError(
-            self._config_name, self._config_paths)
+        raise errors.ConfigFileNotFoundError(self._config_name, self._config_paths)
 
     def debug(self):  # pragma: no cover
         """Prints all configuration registries for debugging purposes."""

@@ -11,9 +11,9 @@ def update_config():
 
 
 fp = FlagsProvider()
-fp.add_argument("--hello",
-                type=str,
-                help="From where to say hello (default %(default)s)")
+fp.add_argument(
+    "--hello", type=str, help="From where to say hello (default %(default)s)"
+)
 v.bind_flags(fp, sys.argv)
 update_config()
 v.watch_config()

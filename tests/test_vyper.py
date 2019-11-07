@@ -54,17 +54,13 @@ json_example = {
             {"type": "Regular"},
             {"type": "Chocolate"},
             {"type": "Blueberry"},
-            {"type": "Devil's Food"}
+            {"type": "Devil's Food"},
         ]
     },
     "icings": {
-        "regular": {
-            "types": ["plain", "glazed"]
-        },
-        "premium": {
-            "types": ["passionfruit", "chocolate"]
-        }
-    }
+        "regular": {"types": ["plain", "glazed"]},
+        "premium": {"types": ["passionfruit", "chocolate"]},
+    },
 }
 
 json_camel_case_example = {
@@ -80,18 +76,11 @@ json_camel_case_example = {
             {"Type": "Devil's Food"},
         ],
     },
-    "Prices": [
-        "0.42",
-        "0.82",
-    ],
+    "Prices": ["0.42", "0.82",],
     "Icings": {
-        "Regular": {
-            "Types": ["plain", "glazed"]
-        },
-        "Premium": {
-            "Types": ["passionfruit", "chocolate"]
-        }
-    }
+        "Regular": {"Types": ["plain", "glazed"]},
+        "Premium": {"Types": ["passionfruit", "chocolate"]},
+    },
 }
 
 
@@ -149,7 +138,7 @@ class TestVyper(unittest.TestCase):
             rel_path = "{0}/{1}".format(dir_, f)
             abs_file_path = os.path.join(root, rel_path)
             with os.fdopen(os.open(abs_file_path, flags, 0o0640), "w") as fp:
-                fp.write("key = \"value is {0}\"\n".format(dir_))
+                fp.write('key = "value is {0}"\n'.format(dir_))
 
         return root, config, cleanup
 
@@ -187,11 +176,7 @@ class TestVyper(unittest.TestCase):
     def test_bind_args(self):
         arg_set = argparse.ArgumentParser()
 
-        test_values = {
-            "host": "localhost",
-            "port": "6060",
-            "endpoint": "/public"
-        }
+        test_values = {"host": "localhost", "port": "6060", "endpoint": "/public"}
 
         for name, value in test_values.items():
             arg_set.add_argument("--" + name, default=value)
@@ -212,28 +197,32 @@ class TestVyper(unittest.TestCase):
 
     def test_args_with_value(self):
         fp = argparse.ArgumentParser()
-        fp.add_argument("--app-name", type=str,
-                        help="Application and process name")
-        fp.add_argument("--env", type=str,
-                        choices=["dev", "pre-prod", "prod"],
-                        help="Application env (default %(default)s)")
+        fp.add_argument("--app-name", type=str, help="Application and process name")
+        fp.add_argument(
+            "--env",
+            type=str,
+            choices=["dev", "pre-prod", "prod"],
+            help="Application env (default %(default)s)",
+        )
         self.v._bind_parser_values(fp, ["--app-name=cmd-app", "--env=prod"])
         self.assertEqual("cmd-app", self.v.get("app_name"))
         self.assertEqual("prod", self.v.get("env"))
 
     def test_args_with_bad_value(self):
         p = argparse.ArgumentParser()
-        p.add_argument("--app-name", type=str,
-                       help="Application and process name")
-        p.add_argument("--env", type=str,
-                       choices=["dev", "pre-prod", "prod"],
-                       help="Application env")
+        p.add_argument("--app-name", type=str, help="Application and process name")
+        p.add_argument(
+            "--env",
+            type=str,
+            choices=["dev", "pre-prod", "prod"],
+            help="Application env",
+        )
         # Setting a value flag which is not in the choices list should raise a system error
         # Help will be shown in cmd to see how to use the flag.
         with self.assertRaises(SystemExit):
             self.v._bind_parser_values(
-                p,
-                ["--app-name=cmd-app", "--env=not-in-the-list"])
+                p, ["--app-name=cmd-app", "--env=not-in-the-list"]
+            )
 
     def test_args_override(self):
         # Yaml config
@@ -251,14 +240,13 @@ class TestVyper(unittest.TestCase):
 
         p = argparse.ArgumentParser()
         p.add_argument("--yaml-param", type=str)
-        p.add_argument("--overrides-param", type=str,
-                       default="override_arg")
+        p.add_argument("--overrides-param", type=str, default="override_arg")
         p.add_argument("--default-param", type=str)
-        p.add_argument("--default-param-arg", type=str,
-                       default="default_from_arg")
+        p.add_argument("--default-param-arg", type=str, default="default_from_arg")
 
-        self.v._bind_parser_values(p, ["--yaml-param=from_flags",
-                                       "--default-param=from_flags"])
+        self.v._bind_parser_values(
+            p, ["--yaml-param=from_flags", "--default-param=from_flags"]
+        )
 
         self.assertEqual("from_flags", self.v.get("yaml_param"))
         self.assertEqual("from_overrides", self.v.get("overrides_param"))
@@ -353,8 +341,16 @@ class TestVyper(unittest.TestCase):
         self._init_json()
         self.v.set("setkey", "setvalue")
         self.v.set_default("defaultkey", "defaultvalue")
-        all_keys = ["batters", "name", "icings", "ppu", "type", "id",
-                    "setkey", "defaultkey"]
+        all_keys = [
+            "batters",
+            "name",
+            "icings",
+            "ppu",
+            "type",
+            "id",
+            "setkey",
+            "defaultkey",
+        ]
         self.assertSetEqual(set(self.v.all_keys()), set(all_keys))
 
     def test_case_insensitive(self):
@@ -363,18 +359,18 @@ class TestVyper(unittest.TestCase):
 
         self._init_json(fixture=json_camel_case_example)
         self.assertEqual("0001", self.v.get("Id"))
-        self.assertEqual({
-            "Batter": [
-                {"Type": "Regular"},
-                {"Type": "Chocolate"},
-                {"Type": "Blueberry"},
-                {"Type": "Devil's Food"},
-            ],
-        }, self.v.get("batters"))
-        self.assertEqual([
-            "0.42",
-            "0.82",
-        ], self.v.get("prices"))
+        self.assertEqual(
+            {
+                "Batter": [
+                    {"Type": "Regular"},
+                    {"Type": "Chocolate"},
+                    {"Type": "Blueberry"},
+                    {"Type": "Devil's Food"},
+                ],
+            },
+            self.v.get("batters"),
+        )
+        self.assertEqual(["0.42", "0.82",], self.v.get("prices"))
 
     def test_aliases_of_aliases(self):
         self.v.register_alias("Foo", "Bar")
@@ -426,8 +422,7 @@ class TestVyper(unittest.TestCase):
 
             v.read_in_config()
 
-            self.assertEqual("value is " + v._config_paths[0].name,
-                             v.get_string("key"))
+            self.assertEqual("value is " + v._config_paths[0].name, v.get_string("key"))
         finally:
             cleanup()
 
@@ -486,8 +481,7 @@ class TestVyper(unittest.TestCase):
         self.v.read_config(yaml.safe_dump(text(yaml_example)))
 
         subv = self.v.sub("clothing")
-        self.assertEqual(self.v.get("clothing.pants.size"),
-                         subv.get("pants.size"))
+        self.assertEqual(self.v.get("clothing.pants.size"), subv.get("pants.size"))
 
         subv = self.v.sub("clothing.pants")
         self.assertEqual(self.v.get("clothing.pants.size"), subv.get("size"))
@@ -549,9 +543,9 @@ class TestVyper(unittest.TestCase):
         self.assertEqual(self.v.get("a"), "xyz")
 
     def test_not_found(self):
-        not_found_key = 'not.found.key'
+        not_found_key = "not.found.key"
         self.assertEqual(self.v.get(not_found_key), None)
-        self.assertEqual(self.v.get_string(not_found_key), '')
+        self.assertEqual(self.v.get_string(not_found_key), "")
         self.assertEqual(self.v.get_int(not_found_key), 0)
         self.assertEqual(self.v.get_float(not_found_key), 0.0)
         self.assertEqual(self.v.get_bool(not_found_key), False)

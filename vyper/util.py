@@ -20,6 +20,7 @@ log = logging.getLogger("vyper.util")
 
 class ConfigParserError(Exception):
     """Denotes failing to parse configuration file."""
+
     def __init__(self, message, *args):
         self.message = message
         super(ConfigParserError, self).__init__(message, *args)
@@ -34,7 +35,7 @@ def abs_pathify(in_path):
     try:
         return pathlib.Path(in_path).resolve()
     except FileNotFoundError as e:
-        log.error("Couldn\"t discover absolute path: {0}".format(e))
+        log.error('Couldn"t discover absolute path: {0}'.format(e))
         return ""
 
 
