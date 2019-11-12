@@ -550,18 +550,18 @@ class Vyper(object):
 
         return self.merge_config(f)
 
-    def read_config(self, file_):
+    def read_config(self, f):
         """Vyper will read a configuration file, setting existing keys to
         `None` if the key does not exist in the file.
         """
-        self._unmarshall_reader(file_, self._config)
+        self._unmarshall_reader(f, self._config)
 
-    def merge_config(self, file_):
+    def merge_config(self, f):
         if self._config is None:
             self._config = {}
 
         cfg = {}
-        cfg = self._unmarshall_reader(file_, cfg)
+        cfg = self._unmarshall_reader(f, cfg)
 
         self._merge_dicts(cfg, self._config)
 
@@ -578,9 +578,9 @@ class Vyper(object):
         """
         return self._get_key_value_config()
 
-    def _unmarshall_reader(self, file_, d):
+    def _unmarshall_reader(self, f, d):
         """Unmarshall a file into a `dict`."""
-        return util.unmarshall_config_reader(file_, d, self._get_config_type())
+        return util.unmarshall_config_reader(f, d, self._get_config_type())
 
     def _get_key_value_config(self):
         """Retrieves the first found remote configuration."""

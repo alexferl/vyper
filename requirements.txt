@@ -1,5 +1,5 @@
 distconfig==0.1.0
 pathlib==1.0.1
-pytoml==0.1.21
 PyYAML==5.1.2
+toml==0.10.0
 watchdog==0.9.0

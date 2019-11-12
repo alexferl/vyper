@@ -2,7 +2,7 @@ import logging
 import os
 import pathlib
 
-import pytoml as toml
+import toml
 import yaml
 
 try:
@@ -47,12 +47,12 @@ def exists(path):
         return False
 
 
-def unmarshall_config_reader(file_, d, config_type):
+def unmarshall_config_reader(r, d, config_type):
     config_type = config_type.lower()
 
     if config_type in ["yaml", "yml"]:
         try:
-            f = yaml.safe_load(file_)
+            f = yaml.safe_load(r)
             try:
                 d.update(yaml.safe_load(f))
             except AttributeError:  # to read files
@@ -62,7 +62,7 @@ def unmarshall_config_reader(file_, d, config_type):
 
     elif config_type == "json":
         try:
-            f = json.loads(file_)
+            f = json.loads(r)
             d.update(f)
         except Exception as e:
             raise ConfigParserError(e)
@@ -70,10 +70,12 @@ def unmarshall_config_reader(file_, d, config_type):
     elif config_type == "toml":
         try:
             try:
-                f = toml.loads(file_)
-                d.update(f)
-            except AttributeError:  # to read streams
-                d.update(file_)
+                d.update(toml.loads(r))
+            except TypeError:  # to read files
+                try:
+                    d.update(toml.load(r))
+                except TypeError:  # to read streams
+                    d.update(r)
         except Exception as e:
             raise ConfigParserError(e)
 

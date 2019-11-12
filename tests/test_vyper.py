@@ -4,7 +4,7 @@ import os
 import tempfile
 import unittest
 
-import pytoml as toml
+import toml
 import vyper
 import yaml
 from builtins import str as text
