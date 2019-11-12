@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="vyper-config",
-    version="0.5.0",
+    version="0.6.0",
     description="Python configuration with (more) fangs",
     url="http://github.com/admiralobvious/vyper",
     author="Alexandre Ferland",
@@ -13,7 +13,7 @@ setup(
     install_requires=[
         "distconfig>=0.1.0",
         "pathlib>=1.0.1",
-        "pytoml>=0.1.20",
+        "toml>=0.10.0",
         "PyYAML>=5.1",
         "watchdog>=0.9.0",
     ],
