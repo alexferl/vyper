@@ -1,5 +1,5 @@
 from distconfig import Proxy
-import pytoml as toml
+import toml
 import yaml
 
 try:
