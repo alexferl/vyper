@@ -294,6 +294,19 @@ class TestVyper(unittest.TestCase):
         self._init_toml()
         self.assertEqual("TOML Example", self.v.get("title"))
 
+    def test_env_override_default_subclass(self):
+        os.environ['CLASS.KEY2'] = 'newval2'
+
+        self.v.set_default('class.key1', 'val1')
+        self.v.set_default('class.key2', 'val2')
+        self.v.set_default('class.key3', 'val3')
+
+        self.v.bind_env('class.key1')
+        self.v.bind_env('class.key2')
+        self.v.bind_env('class.key3')
+
+        self.assertEqual('val1', self.v.get('class.key1'))
+
     def test_env(self):
         self._init_json()
 
