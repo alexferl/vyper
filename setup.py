@@ -12,7 +12,7 @@ setup(
     zip_safe=False,
     install_requires=[
         "distconfig>=0.1.0",
-        "pathlib>=1.0.1",
+        'pathlib>=1.0.1;python_version<"3.4"',
         "toml>=0.10.0",
         "PyYAML>=5.1",
         "watchdog>=0.9.0",
