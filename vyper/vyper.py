@@ -352,7 +352,13 @@ class Vyper(object):
         if self._automatic_env_applied:
             # even if it hasn't been registered, if `automatic_env` is used,
             # check any `get` request
+
+            # Find "as-is"
             val = self._get_env(self._merge_with_env_prefix(key))
+            # Find nested
+            if val is None and "." in key:
+                val = self._get_env(self._merge_with_env_prefix(key.replace(".", "_")))
+
             if val is not None:
                 log.debug("{0} found in environment: {1}".format(key, val))
                 return val
