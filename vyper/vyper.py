@@ -321,12 +321,14 @@ class Vyper(object):
         return source.get(real_key)
 
     def _set_insensitive(self, key, val, source):
-        real_key = self._find_real_key(key, source)
-        if real_key is None:
-            msg = "No case insensitive variant of {0} found.".format(key)
-            raise KeyError(msg)
+        if source:
+            real_key = self._find_real_key(key, source)
+            if real_key is None:
+                msg = "No case insensitive variant of {0} found.".format(key)
+                raise KeyError(msg)
 
-        source[real_key] = val
+            source[real_key] = val
+            return True
 
     def _find(self, key):
         """Given a key, find the value
@@ -385,8 +387,8 @@ class Vyper(object):
                         real_key = self._find_real_key(path, temp)
                         temp = temp[real_key]
 
-                    self._set_insensitive(item["final_key"], val, temp)
-                    found_in_env = True
+                    if self._set_insensitive(item["final_key"], val, temp):
+                        found_in_env = True
                 else:
                     log.debug("{0} env value unset".format(item["env_key"]))
 
