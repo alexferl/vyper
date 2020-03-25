@@ -295,17 +295,17 @@ class TestVyper(unittest.TestCase):
         self.assertEqual("TOML Example", self.v.get("title"))
 
     def test_env_override_default_subclass(self):
-        os.environ['CLASS.KEY2'] = 'newval2'
+        os.environ["CLASS.KEY2"] = "newval2"
 
-        self.v.set_default('class.key1', 'val1')
-        self.v.set_default('class.key2', 'val2')
-        self.v.set_default('class.key3', 'val3')
+        self.v.set_default("class.key1", "val1")
+        self.v.set_default("class.key2", "val2")
+        self.v.set_default("class.key3", "val3")
 
-        self.v.bind_env('class.key1')
-        self.v.bind_env('class.key2')
-        self.v.bind_env('class.key3')
+        self.v.bind_env("class.key1")
+        self.v.bind_env("class.key2")
+        self.v.bind_env("class.key3")
 
-        self.assertEqual('val1', self.v.get('class.key1'))
+        self.assertEqual("val1", self.v.get("class.key1"))
 
     def test_env(self):
         self._init_json()
@@ -596,7 +596,7 @@ b:
         os.environ["ENV_PREFIX_CLOTHING_PANTS_SIZE"] = "small"
 
         self._init_yaml()
-        self.v.set_env_prefix('env_prefix')
+        self.v.set_env_prefix("env_prefix")
         self.v.automatic_env()
 
         self.assertEqual("small", self.v.get("clothing.pants.size"))
