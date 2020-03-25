@@ -577,3 +577,15 @@ b:
         self.assertEqual(self.v.get_int(not_found_key), 0)
         self.assertEqual(self.v.get_float(not_found_key), 0.0)
         self.assertEqual(self.v.get_bool(not_found_key), False)
+
+    def test_nested_keys_with_environment_variables(self):
+        os.environ["ENV_PREFIX_NAME"] = "john"
+        os.environ["ENV_PREFIX_CLOTHING_PANTS_SIZE"] = "small"
+
+        self._init_yaml()
+        self.v.set_env_prefix('env_prefix')
+        self.v.automatic_env()
+
+        self.assertEqual("small", self.v.get("clothing.pants.size"))
+        self.assertEqual(35, self.v.get("age"))
+        self.assertEqual("john", self.v.get("name"))
