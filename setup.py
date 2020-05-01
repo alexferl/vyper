@@ -17,8 +17,8 @@ setup(
         "PyYAML>=5.1",
         "watchdog>=0.9.0",
     ],
-    setup_requires=["pytest-runner>=5.1"],
-    tests_require=["pytest>=5.0.1"],
+    setup_requires=["pytest-runner>=5.2"],
+    tests_require=["pytest>=5.4.1"],
     platforms="any",
     classifiers=[
         "Intended Audience :: Developers",

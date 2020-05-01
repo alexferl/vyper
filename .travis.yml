@@ -6,5 +6,14 @@ python:
   - "3.7"
   - "3.8"
 cache: pip
-install: pip install -r dev_requirements.txt
-script: python setup.py test
+before_install:
+  - python --version
+  - pip install -U pip
+  - pip install -U pytest
+  - pip install -U pytest-cov
+  - pip install -U codecov
+install:
+  - pip install ".[test]" .
+script: pytest --cov=./vyper
+after_success:
+  - codecov
