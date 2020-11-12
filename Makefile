@@ -1,4 +1,4 @@
-.PHONY: help build clean update test lint
+.PHONY: help dev clean update test lint
 
 VENV_NAME?=venv
 VENV_ACTIVATE=. $(VENV_NAME)/bin/activate
@@ -6,7 +6,7 @@ PYTHON=${VENV_NAME}/bin/python3
 
 .DEFAULT: help
 help:
-	@echo "make build"
+	@echo "make dev"
 	@echo "       prepare development environment, use only once"
 	@echo "make clean"
 	@echo "       delete development environment"
@@ -17,7 +17,7 @@ help:
 	@echo "make lint"
 	@echo "       run black"
 
-build:
+dev:
 	make venv
 
 venv: $(VENV_NAME)/bin/activate

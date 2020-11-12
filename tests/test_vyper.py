@@ -76,7 +76,10 @@ json_camel_case_example = {
             {"Type": "Devil's Food"},
         ],
     },
-    "Prices": ["0.42", "0.82",],
+    "Prices": [
+        "0.42",
+        "0.82",
+    ],
     "Icings": {
         "Regular": {"Types": ["plain", "glazed"]},
         "Premium": {"Types": ["passionfruit", "chocolate"]},
@@ -383,7 +386,13 @@ class TestVyper(unittest.TestCase):
             },
             self.v.get("batters"),
         )
-        self.assertEqual(["0.42", "0.82",], self.v.get("prices"))
+        self.assertEqual(
+            [
+                "0.42",
+                "0.82",
+            ],
+            self.v.get("prices"),
+        )
 
     def test_aliases_of_aliases(self):
         self.v.register_alias("Foo", "Bar")

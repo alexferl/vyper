@@ -1,10 +1,19 @@
 repos:
-- repo: local
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.3.0
+  hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-json
+  - id: check-toml
+  - id: check-yaml
+  - id: mixed-line-ending
+    args: ['--fix=lf']
+    description: Forces to replace line ending by the UNIX 'lf' character.
+  - id: pretty-format-json
+    args: ['--autofix', '--no-sort-keys', '--no-ensure-ascii']
+- repo: https://github.com/psf/black
+  rev: 20.8b1
   hooks:
   - id: black
-    name: black
-    stages: [commit]
-    language: system
-    entry: venv/bin/black -t py37 --exclude venv .
-    types: [python]
-
+    language_version: python3

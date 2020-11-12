@@ -20,7 +20,7 @@ If everything worked, you should see the following in the terminal:
 Hello from flask!
 ```
 To test that the config file is being watched and reloaded,
-just change the `hello` key value to `world!` in config.json and if you 
+just change the `hello` key value to `world!` in config.json and if you
 `$ curl http://localhost:5000` you should now see the following in the terminal:
 ```
 Hello world!

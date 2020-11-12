@@ -218,8 +218,7 @@ class Vyper(object):
         return b"{0}".format(self.get(key))
 
     def sub(self, key):
-        """Returns new Vyper instance representing a sub tree of this instance.
-        """
+        """Returns new Vyper instance representing a sub tree of this instance."""
         subv = Vyper()
         data = self.get(key)
         if isinstance(data, dict):
@@ -436,8 +435,7 @@ class Vyper(object):
         return None
 
     def is_set(self, key):
-        """Check to see if the key has been set in any of the data locations.
-        """
+        """Check to see if the key has been set in any of the data locations."""
         path = key.split(self._key_delimiter)
 
         lower_case_key = key.lower()
@@ -509,8 +507,7 @@ class Vyper(object):
             return key
 
     def in_config(self, key):
-        """Check to see if the given key (or an alias) is in the config file.
-        """
+        """Check to see if the given key (or an alias) is in the config file."""
         # if the requested key is an alias, then return the proper key
         key = self._real_key(key)
 
