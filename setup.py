@@ -4,7 +4,7 @@ setup(
     name="vyper-config",
     version="1.0.0",
     description="Python configuration with (more) fangs",
-    url="http://github.com/admiralobvious/vyper",
+    url="http://github.com/alexferl/vyper",
     author="Alexandre Ferland",
     author_email="aferlandqc@gmail.com",
     license="MIT",
