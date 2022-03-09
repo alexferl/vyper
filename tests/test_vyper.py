@@ -61,6 +61,13 @@ json_example = {
         "regular": {"types": ["plain", "glazed"]},
         "premium": {"types": ["passionfruit", "chocolate"]},
     },
+    "ingredients": {
+        "batter": {
+            "Regular": {
+                "eggs": 2,
+            }
+        }
+    },
 }
 
 json_camel_case_example = {
@@ -366,6 +373,7 @@ class TestVyper(unittest.TestCase):
             "id",
             "setkey",
             "defaultkey",
+            "ingredients",
         ]
         self.assertSetEqual(set(self.v.all_keys()), set(all_keys))
 
@@ -611,3 +619,20 @@ b:
         self.assertEqual("small", self.v.get("clothing.pants.size"))
         self.assertEqual(35, self.v.get("age"))
         self.assertEqual("john", self.v.get("name"))
+
+    def test_nested_defaults_same_as_config(self):
+        self._init_json()
+        self.v.set_default(
+            "ingredients",
+            {
+                "batter": {
+                    "Regular": {
+                        "milk": "raw",
+                    }
+                }
+            },
+        )
+
+        self.v.debug()
+
+        self.assertEqual("raw", self.v.get("ingredients.batter.Regular.milk"))
