@@ -7,15 +7,15 @@ PYTHON=${VENV_NAME}/bin/python3
 .DEFAULT: help
 help:
 	@echo "make dev"
-	@echo "       prepare development environment, use only once"
+	@echo "	prepare development environment, use only once"
 	@echo "make clean"
-	@echo "       delete development environment"
+	@echo "	delete development environment"
 	@echo "make update"
-	@echo "       update dependencies"
+	@echo "	update dependencies"
 	@echo "make test"
-	@echo "       run tests"
+	@echo "	run tests"
 	@echo "make lint"
-	@echo "       run black"
+	@echo "	run black"
 
 dev:
 	make venv
