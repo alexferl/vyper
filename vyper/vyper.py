@@ -166,10 +166,11 @@ class Vyper(object):
         if not keys:
             return d
         for key in keys:
-            if key in d and not isinstance(d[key], dict):
-                return d[key]
-            elif key in d:
-                return self._search_dict(d[key], keys[1::])
+            val = self._find_insensitive(key, d)
+            if val and not isinstance(val, dict):
+                return val
+            elif val:
+                return self._search_dict(val, keys[1::])
             else:
                 return None
 
@@ -427,10 +428,24 @@ class Vyper(object):
             return val
 
         # DEFAULTS
-        val = self._defaults.get(key)
+        val = self._find_in_defaults(key)
         if val is not None:
-            log.debug("{0} found in defaults: {1}".format(key, val))
             return val
+
+        return None
+
+    def _find_in_defaults(self, key):
+        val = self._find_insensitive(key, self._defaults)
+        if val is not None:
+            return val
+
+        if self._key_delimiter in key:
+            path = key.split(self._key_delimiter)
+            source = self._find_in_defaults(path[0])
+            if source is not None and isinstance(source, dict):
+                val = self._search_dict(source, path[1::])
+                if val is not None:
+                    return val
 
         return None
 
