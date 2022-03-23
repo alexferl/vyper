@@ -167,7 +167,7 @@ class Vyper(object):
             return d
         for key in keys:
             val = self._find_insensitive(key, d)
-            if val and not isinstance(val, dict):
+            if val is not None and not isinstance(val, dict):
                 return val
             elif val:
                 return self._search_dict(val, keys[1::])
