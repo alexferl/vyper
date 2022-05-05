@@ -25,6 +25,10 @@ sweet:
 
 yaml_example = """Hacker: true
 name: steve
+pets:
+    count: 0
+    names: []
+    preferred_veterinarian: ''
 hobbies:
 - skateboarding
 - snowboarding
@@ -430,6 +434,9 @@ class TestVyper(unittest.TestCase):
     def test_is_set(self):
         self.v.set_config_type("yaml")
         self.v.read_config(yaml.safe_dump(text(yaml_example)))
+        self.assertTrue(self.v.is_set("pets.count"))
+        self.assertTrue(self.v.is_set("pets.names"))
+        self.assertTrue(self.v.is_set("pets.preferred_veterinarian"))
         self.assertTrue(self.v.is_set("clothing.jacket"))
         self.assertFalse(self.v.is_set("clothing.jackets"))
         self.assertFalse(self.v.is_set("helloworld"))
