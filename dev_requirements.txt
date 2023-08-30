@@ -1,5 +1,5 @@
 black==22.1.0
-Flask==1.1.2
+Flask==2.3.2
 kazoo==2.8.0
 pre-commit==2.8.2
 pytest==7.1.0
