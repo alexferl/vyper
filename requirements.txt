@@ -1,4 +1,4 @@
 distconfig3==1.0.1
-PyYAML==5.4.1
+PyYAML==6.0.1
 toml==0.10.2
-watchdog==0.10.3
+watchdog==3.0.0

@@ -1,2 +1,2 @@
-kazoo==2.6.0
+kazoo==2.9.0
 vyper-config
