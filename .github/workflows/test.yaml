@@ -24,11 +24,7 @@ jobs:
         with:
           python-version: '${{ matrix.python-version }}'
       - uses: actions/checkout@v2
-      - run: python --version
-      - run: pip install -U pip
-      - run: pip install -U pytest
-      - run: pip install -U pytest-cov
-      - run: pip install -U codecov
+      - run: pip install pip pytest pytest-cov codecov
       - run: 'pip install ".[test]" .'
       - run: pytest --cov=./vyper
       - run: codecov
