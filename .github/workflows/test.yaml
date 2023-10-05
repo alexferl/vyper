@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: '${{ matrix.python-version }}'
       - uses: actions/checkout@v2
-      - run: pip install pip pytest pytest-cov codecov
-      - run: 'pip install ".[test]" .'
+      - run: pip install pytest-cov codecov
+      - run: pip install -r requirements-dev.txt
       - run: pytest --cov=./vyper
       - run: codecov
