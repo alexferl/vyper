@@ -1,9 +1,0 @@
-black==23.9.1
-Flask==3.0.0
-kazoo==2.9.0
-pre-commit==3.4.0
-pytest==7.4.2
-python-consul==1.1.0
-python-etcd==0.4.5
-
--r requirements.txt
