@@ -10,7 +10,7 @@ toml = "==0.10.2"
 watchdog = "==3.0.0"
 
 [dev-packages]
-black = "==23.9.1"
+black = "==24.3.0"
 flask = "==3.0.0"
 kazoo = "==2.9.0"
 pre-commit = "==3.4.0"
