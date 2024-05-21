@@ -28,7 +28,7 @@ pytest==7.4.2; python_version >= '3.7'
 python-consul==1.1.0
 python-etcd==0.4.5
 pyyaml==6.0.1; python_version >= '3.6'
-requests==2.31.0; python_version >= '3.7'
+requests==2.32.0; python_version >= '3.7'
 setuptools==68.2.2; python_version >= '3.8'
 six==1.16.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
 toml==0.10.2; python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2, 3.3'
