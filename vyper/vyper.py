@@ -324,8 +324,8 @@ class Vyper(object):
         if source:
             real_key = self._find_real_key(key, source)
             if real_key is None:
-                msg = "No case insensitive variant of {0} found.".format(key)
-                raise KeyError(msg)
+                log.debug("No case insensitive variant of {0} found.".format(key))
+                return False
 
             source[real_key] = val
             return True
